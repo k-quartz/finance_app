@@ -1,0 +1,23 @@
+# Android / Kotlin
+*.iml
+.gradle/
+**/build/
+local.properties
+.idea/
+.vscode/
+.DS_Store
+
+# Gradle
+.gradle
+/gradle.properties
+
+# Generated files
+/captures/
+/externalNativeBuild/
+/.cxx/
+
+# OS files
+Thumbs.db
+
+# Logs
+*.log
