@@ -9,7 +9,10 @@ import androidx.room.PrimaryKey
 @Entity(
     tableName = "mutual_fund_nav_history",
     foreignKeys = [ForeignKey(entity = MutualFundEntity::class, parentColumns = ["fund_id"], childColumns = ["fund_id"], onDelete = ForeignKey.RESTRICT)],
-    indices = [Index(value = ["fund_id", "as_of_date_epoch_day"], unique = true)],
+    indices = [
+        Index(value = ["fund_id", "as_of_date_epoch_day"], unique = true),
+        Index(value = ["as_of_date_epoch_day", "fund_id"]),
+    ],
 )
 data class MutualFundNavEntity(
     @PrimaryKey(autoGenerate = true) @ColumnInfo(name = "nav_id") val navId: Long = 0L,

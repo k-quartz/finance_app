@@ -68,6 +68,29 @@ class TransactionAnalyticsTest {
         assertEquals(300L, report.buckets.sumOf { it.expense.minorUnits })
     }
 
+    @Test
+    fun `quarter buckets include quarter boundaries and leap day`() {
+        val transactions = listOf(
+            transaction(LocalDate.of(2026, 1, 1), TransactionType.EXPENSE, 100, 1L),
+            transaction(LocalDate.of(2026, 3, 31), TransactionType.INCOME, 500, null),
+            transaction(LocalDate.of(2026, 4, 1), TransactionType.EXPENSE, 250, 1L),
+            transaction(LocalDate.of(2026, 6, 30), TransactionType.EXPENSE, 750, 1L),
+            transaction(LocalDate.of(2026, 7, 1), TransactionType.TRANSFER, 9_999, null),
+        )
+
+        val report = TransactionAnalytics.analyze(
+            transactions,
+            ReportingPeriod(LocalDate.of(2026, 1, 1), LocalDate.of(2026, 9, 30), ReportingGranularity.QUARTER),
+        )
+
+        assertEquals(3, report.buckets.size)
+        assertEquals(LocalDate.of(2026, 1, 1), report.buckets.first().startDate)
+        assertEquals(LocalDate.of(2026, 3, 31), report.buckets.first().endDate)
+        assertEquals(100L, report.buckets[0].expense.minorUnits)
+        assertEquals(1_000L, report.buckets[1].expense.minorUnits)
+        assertEquals(0L, report.buckets[2].expense.minorUnits)
+    }
+
     private fun transaction(date: LocalDate, type: TransactionType, amount: Long, categoryId: Long?) = FinancialTransaction(
         accountId = 1L,
         type = type,

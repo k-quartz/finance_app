@@ -11,6 +11,8 @@ The architecture is organized into the following conceptual layers:
 - Data layer: persistence, Room DAOs, repository implementations, local data access, import/export, and mapping
 - Shared support: common utilities, configuration, logging, security, and time abstractions
 
+Local backup security is handled in the shared support/security boundary. Exported financial snapshots are encrypted before they are written to disk, and the encryption key is stored in AndroidX `EncryptedSharedPreferences` using the Android Keystore-backed AES-GCM implementation. Restore accepts both encrypted and legacy plaintext payloads to preserve older local backups, but malformed ciphertext is rejected before any database mutation.
+
 The dependency direction is:
 
 Presentation -> Domain abstractions
@@ -26,9 +28,17 @@ Product and purchase workflows follow the same boundary. Quantities are positive
 
 Backup and restore are handled in the data layer through a versioned JSON snapshot repository. Exports capture the full persisted Room dataset, including inactive and soft-deleted rows, and restores execute within a single Room transaction so any constraint or validation failure rolls back the whole operation. The backup format is schema-aware and rejects malformed or version-mismatched payloads before mutating the database.
 
-The application shell is a small Compose Navigation graph with Dashboard as its start destination and Backup as a persistent bottom-navigation destination. Dashboard remains the Phase 12 root experience; the shell provides the application-level access path required by the V1 local backup capability without inventing destinations for domain features that do not yet have presentation screens. Backup file selection is owned by the Android presentation layer through the system document provider, while export and restore execution remain behind the `BackupRepository` abstraction.
+Backup exports read all tables inside one Room transaction to prevent cross-table snapshots from observing concurrent mutation. Restore rejects duplicate primary keys before clearing the target database, while database constraints continue to reject invalid references and duplicate natural keys.
 
-Monthly and yearly transaction analytics use explicit inclusive reporting periods in the domain layer. The calculator creates contiguous date buckets, ignores transfers for income/expense reporting, preserves exact minor-unit category totals, and aggregates each transaction once before producing the latest-bucket category comparison. The repository filters by account and date before invoking the calculator.
+The account repository exposes domain accounts only; Room entities and generic persistence mutations remain internal to the data layer. Mutual-fund holdings are recomputed from the complete date-ordered event history after each insert inside the same transaction, so backdated events cannot diverge persisted holdings from historical valuation behavior.
+
+The application shell is a small Compose Navigation graph with Dashboard as its start destination and Dashboard, Manage, and Backup as persistent bottom-navigation destinations. Manage exposes the implemented account, category, transaction, purchase, product, investment, historical-price, NAV, analytics, and recurring-analysis workflows. Backup file selection is owned by the Android presentation layer through the system document provider, while export and restore execution remain behind the `BackupRepository` abstraction.
+
+Phase 17 adds a persistent Manage destination. Its workflow ViewModel accepts user input, constructs domain models, loads domain records through repository read APIs, and delegates every mutation to repository abstractions; Compose does not access Room entities or DAO operations. Account, product, and category lifecycle operations remain soft-delete or active-state transitions, preserving historical references.
+
+Monthly, quarterly, and yearly transaction analytics use explicit inclusive reporting periods in the domain layer. The calculator creates contiguous date buckets, ignores transfers for income/expense reporting, preserves exact minor-unit category totals, and aggregates each transaction once before producing the latest-bucket category comparison. The repository filters by account and date before invoking the calculator. Manage exposes all three granularities.
+
+Performance-sensitive repository paths use bounded batch reads. Dashboard product comparisons load product metadata and requested price history with one query each rather than per-product reads, while Room date-range and latest-NAV queries use explicit composite indexes. The performance baseline and query-plan regression tests are documented in `PERFORMANCE_BASELINE.md`.
 
 Recurring expense detection is a local domain analysis over persisted transaction history. It considers only positive expense transactions with a non-blank merchant, groups by account/category/normalized merchant, requires at least three observations, and recognizes weekly or monthly cadence only when every consecutive date interval matches the cadence tolerance. Amounts must remain within 10 percent, and the returned confidence score combines cadence consistency (60 percent) and amount similarity (40 percent). No recurring pattern is persisted and transfers are never candidates.
 

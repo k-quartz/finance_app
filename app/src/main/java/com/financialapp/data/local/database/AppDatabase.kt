@@ -22,7 +22,7 @@ import com.financialapp.data.local.entity.MutualFundTransactionEntity
 import com.financialapp.data.local.entity.MutualFundNavEntity
 
 @Database(
-    version = 8,
+    version = 9,
     exportSchema = true,
     entities = [
         AccountEntity::class,

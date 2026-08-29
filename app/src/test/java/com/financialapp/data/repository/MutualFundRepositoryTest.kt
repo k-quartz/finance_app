@@ -73,6 +73,40 @@ class MutualFundRepositoryTest {
         }
     }
 
+    @Test
+    fun `backdated redemption is rejected and does not persist`(): Unit = runBlocking {
+        val accountId = insertAccount("Investment", AccountType.INVESTMENT)
+        val fundId = repository.createFund(MutualFund(name = "Index Fund", code = "INDEX-BACKDATED"))
+        repository.recordPurchase(
+            transaction(
+                fundId,
+                accountId,
+                InvestmentTransactionType.PURCHASE,
+                1_000L,
+                1_000L,
+                1_000L,
+            ).copy(transactionDate = date.plusDays(10)),
+        )
+
+        assertThrows(IllegalArgumentException::class.java) {
+            runBlocking {
+                repository.recordRedemption(
+                    transaction(
+                        fundId,
+                        accountId,
+                        InvestmentTransactionType.REDEMPTION,
+                        1_000L,
+                        1_000L,
+                        1_000L,
+                    ).copy(transactionDate = date),
+                )
+            }
+        }
+
+        assertEquals(1, database.mutualFundDao().getTransactions(fundId, accountId).size)
+        assertEquals(FundUnits(1_000L, 3), repository.getHolding(fundId, accountId)!!.units)
+    }
+
     private suspend fun insertAccount(name: String, type: AccountType): Long = database.accountDao().upsert(AccountEntity(accountType = type, name = name, currencyCode = "INR", createdAtEpochMs = 1L, updatedAtEpochMs = 1L))
 
     private fun transaction(fundId: Long, accountId: Long, type: InvestmentTransactionType, unitsMinor: Long, navMinor: Long, amountMinor: Long, cashAccountId: Long? = null, linkedCashId: Long? = null) = MutualFundTransaction(

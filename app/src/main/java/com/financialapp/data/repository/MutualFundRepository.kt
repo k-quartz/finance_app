@@ -34,6 +34,9 @@ import java.time.LocalDate
 interface MutualFundRepository {
     suspend fun createFund(fund: MutualFund): Long
     suspend fun getFund(fundId: Long): MutualFund?
+    suspend fun getFunds(): List<MutualFund>
+    suspend fun getInvestmentTransactions(): List<MutualFundTransaction>
+    suspend fun getNavHistory(): List<FundNavEntry>
     suspend fun recordPurchase(transaction: MutualFundTransaction): Long
     suspend fun recordRedemption(transaction: MutualFundTransaction): Long
     suspend fun getHolding(fundId: Long, investmentAccountId: Long): MutualFundHolding?
@@ -42,6 +45,12 @@ interface MutualFundRepository {
     suspend fun valueAt(fundId: Long, investmentAccountId: Long, asOfDate: LocalDate): MutualFundValuation
     suspend fun calculateReturn(fundId: Long, investmentAccountId: Long, asOfDate: LocalDate): MutualFundReturn
 }
+
+data class FundNavEntry(
+    val fundId: Long,
+    val nav: Money,
+    val asOfDate: LocalDate,
+)
 
 class LocalMutualFundRepository(
     private val database: AppDatabase,
@@ -56,6 +65,15 @@ class LocalMutualFundRepository(
     }
 
     override suspend fun getFund(fundId: Long): MutualFund? = mutualFundDao.getFund(fundId)?.takeUnless { it.isDeleted }?.toDomain()
+
+    override suspend fun getFunds(): List<MutualFund> = mutualFundDao.getActiveFunds().map(MutualFundEntity::toDomain)
+
+    override suspend fun getInvestmentTransactions(): List<MutualFundTransaction> =
+        mutualFundDao.getAllTransactionsOrdered().map(MutualFundTransactionEntity::toDomain)
+
+    override suspend fun getNavHistory(): List<FundNavEntry> = mutualFundDao.getNavHistoryOrdered().map {
+        FundNavEntry(it.fundId, Money(it.navMinor, it.currencyCode), LocalDate.ofEpochDay(it.asOfDateEpochDay))
+    }
 
     override suspend fun recordPurchase(transaction: MutualFundTransaction): Long = record(transaction, DomainInvestmentTransactionType.PURCHASE)
 
@@ -81,7 +99,9 @@ class LocalMutualFundRepository(
             val previous = mutualFundDao.getHolding(transaction.fundId, transaction.investmentAccountId)?.toDomain()
             val now = transaction.createdAt.toEpochMilli()
             val id = mutualFundDao.insertTransaction(transaction.toEntity(now))
-            val next = InvestmentCalculator.reconcileHolding(previous, transaction, transaction.createdAt)
+            val allEvents = mutualFundDao.getTransactions(transaction.fundId, transaction.investmentAccountId)
+                .map(MutualFundTransactionEntity::toDomain)
+            val next = holdingAt(allEvents, transaction.fundId, transaction.investmentAccountId, LocalDate.MAX)
             val nextEntity = next.toEntity(previous?.let { mutualFundDao.getHolding(transaction.fundId, transaction.investmentAccountId) }?.holdingId ?: 0L)
             if (previous == null) mutualFundDao.insertHolding(nextEntity) else mutualFundDao.updateHolding(nextEntity)
             id

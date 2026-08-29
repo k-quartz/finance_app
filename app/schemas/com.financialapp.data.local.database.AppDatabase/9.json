@@ -1,0 +1,1327 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 9,
+    "identityHash": "e66d02ceeeb982753e6067e803f8913f",
+    "entities": [
+      {
+        "tableName": "accounts",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`account_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `account_type` TEXT NOT NULL, `name` TEXT NOT NULL, `currency_code` TEXT NOT NULL, `opening_balance_minor` INTEGER NOT NULL, `is_active` INTEGER NOT NULL, `is_deleted` INTEGER NOT NULL, `deleted_at_epoch_ms` INTEGER, `created_at_epoch_ms` INTEGER NOT NULL, `updated_at_epoch_ms` INTEGER NOT NULL, `notes` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "accountType",
+            "columnName": "account_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currencyCode",
+            "columnName": "currency_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "openingBalanceMinor",
+            "columnName": "opening_balance_minor",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isActive",
+            "columnName": "is_active",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isDeleted",
+            "columnName": "is_deleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAtEpochMs",
+            "columnName": "deleted_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "createdAtEpochMs",
+            "columnName": "created_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAtEpochMs",
+            "columnName": "updated_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "account_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_accounts_name_currency_code",
+            "unique": true,
+            "columnNames": [
+              "name",
+              "currency_code"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_accounts_name_currency_code` ON `${TABLE_NAME}` (`name`, `currency_code`)"
+          },
+          {
+            "name": "index_accounts_is_active_is_deleted",
+            "unique": false,
+            "columnNames": [
+              "is_active",
+              "is_deleted"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_accounts_is_active_is_deleted` ON `${TABLE_NAME}` (`is_active`, `is_deleted`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "categories",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`category_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `parent_category_id` INTEGER, `category_type` TEXT NOT NULL, `name` TEXT NOT NULL, `sort_order` INTEGER NOT NULL, `is_active` INTEGER NOT NULL, `is_deleted` INTEGER NOT NULL, `deleted_at_epoch_ms` INTEGER, `created_at_epoch_ms` INTEGER NOT NULL, `updated_at_epoch_ms` INTEGER NOT NULL, FOREIGN KEY(`parent_category_id`) REFERENCES `categories`(`category_id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "categoryId",
+            "columnName": "category_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "parentCategoryId",
+            "columnName": "parent_category_id",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "categoryType",
+            "columnName": "category_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sortOrder",
+            "columnName": "sort_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isActive",
+            "columnName": "is_active",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isDeleted",
+            "columnName": "is_deleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAtEpochMs",
+            "columnName": "deleted_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "createdAtEpochMs",
+            "columnName": "created_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAtEpochMs",
+            "columnName": "updated_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "category_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_categories_parent_category_id_name_category_type",
+            "unique": true,
+            "columnNames": [
+              "parent_category_id",
+              "name",
+              "category_type"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_categories_parent_category_id_name_category_type` ON `${TABLE_NAME}` (`parent_category_id`, `name`, `category_type`)"
+          },
+          {
+            "name": "index_categories_is_active_is_deleted",
+            "unique": false,
+            "columnNames": [
+              "is_active",
+              "is_deleted"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_categories_is_active_is_deleted` ON `${TABLE_NAME}` (`is_active`, `is_deleted`)"
+          },
+          {
+            "name": "index_categories_parent_category_id_sort_order",
+            "unique": false,
+            "columnNames": [
+              "parent_category_id",
+              "sort_order"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_categories_parent_category_id_sort_order` ON `${TABLE_NAME}` (`parent_category_id`, `sort_order`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "categories",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "parent_category_id"
+            ],
+            "referencedColumns": [
+              "category_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "transactions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`transaction_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `account_id` INTEGER NOT NULL, `counterparty_account_id` INTEGER, `transfer_id` TEXT, `category_id` INTEGER, `transaction_type` TEXT NOT NULL, `amount_minor` INTEGER NOT NULL, `currency_code` TEXT NOT NULL, `occurred_date_epoch_day` INTEGER NOT NULL, `posted_at_epoch_ms` INTEGER NOT NULL, `notes` TEXT, `merchant_name` TEXT, `is_deleted` INTEGER NOT NULL, `deleted_at_epoch_ms` INTEGER, `created_at_epoch_ms` INTEGER NOT NULL, `updated_at_epoch_ms` INTEGER NOT NULL, FOREIGN KEY(`account_id`) REFERENCES `accounts`(`account_id`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`counterparty_account_id`) REFERENCES `accounts`(`account_id`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`category_id`) REFERENCES `categories`(`category_id`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
+        "fields": [
+          {
+            "fieldPath": "transactionId",
+            "columnName": "transaction_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "counterpartyAccountId",
+            "columnName": "counterparty_account_id",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "transferId",
+            "columnName": "transfer_id",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "categoryId",
+            "columnName": "category_id",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "transactionType",
+            "columnName": "transaction_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "amountMinor",
+            "columnName": "amount_minor",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currencyCode",
+            "columnName": "currency_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "occurredDateEpochDay",
+            "columnName": "occurred_date_epoch_day",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "postedAtEpochMs",
+            "columnName": "posted_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "merchantName",
+            "columnName": "merchant_name",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "isDeleted",
+            "columnName": "is_deleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAtEpochMs",
+            "columnName": "deleted_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "createdAtEpochMs",
+            "columnName": "created_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAtEpochMs",
+            "columnName": "updated_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "transaction_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_transactions_account_id_occurred_date_epoch_day",
+            "unique": false,
+            "columnNames": [
+              "account_id",
+              "occurred_date_epoch_day"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_transactions_account_id_occurred_date_epoch_day` ON `${TABLE_NAME}` (`account_id`, `occurred_date_epoch_day`)"
+          },
+          {
+            "name": "index_transactions_account_id_is_deleted_occurred_date_epoch_day",
+            "unique": false,
+            "columnNames": [
+              "account_id",
+              "is_deleted",
+              "occurred_date_epoch_day"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_transactions_account_id_is_deleted_occurred_date_epoch_day` ON `${TABLE_NAME}` (`account_id`, `is_deleted`, `occurred_date_epoch_day`)"
+          },
+          {
+            "name": "index_transactions_category_id_occurred_date_epoch_day",
+            "unique": false,
+            "columnNames": [
+              "category_id",
+              "occurred_date_epoch_day"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_transactions_category_id_occurred_date_epoch_day` ON `${TABLE_NAME}` (`category_id`, `occurred_date_epoch_day`)"
+          },
+          {
+            "name": "index_transactions_is_deleted_occurred_date_epoch_day",
+            "unique": false,
+            "columnNames": [
+              "is_deleted",
+              "occurred_date_epoch_day"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_transactions_is_deleted_occurred_date_epoch_day` ON `${TABLE_NAME}` (`is_deleted`, `occurred_date_epoch_day`)"
+          },
+          {
+            "name": "index_transactions_account_id_transaction_type",
+            "unique": false,
+            "columnNames": [
+              "account_id",
+              "transaction_type"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_transactions_account_id_transaction_type` ON `${TABLE_NAME}` (`account_id`, `transaction_type`)"
+          },
+          {
+            "name": "index_transactions_counterparty_account_id",
+            "unique": false,
+            "columnNames": [
+              "counterparty_account_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_transactions_counterparty_account_id` ON `${TABLE_NAME}` (`counterparty_account_id`)"
+          },
+          {
+            "name": "index_transactions_transfer_id",
+            "unique": true,
+            "columnNames": [
+              "transfer_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_transactions_transfer_id` ON `${TABLE_NAME}` (`transfer_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "accounts",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "account_id"
+            ],
+            "referencedColumns": [
+              "account_id"
+            ]
+          },
+          {
+            "table": "accounts",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "counterparty_account_id"
+            ],
+            "referencedColumns": [
+              "account_id"
+            ]
+          },
+          {
+            "table": "categories",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "category_id"
+            ],
+            "referencedColumns": [
+              "category_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "products",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`product_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `default_unit` TEXT NOT NULL, `default_currency_code` TEXT NOT NULL, `category_id` INTEGER, `is_active` INTEGER NOT NULL, `is_deleted` INTEGER NOT NULL, `deleted_at_epoch_ms` INTEGER, `created_at_epoch_ms` INTEGER NOT NULL, `updated_at_epoch_ms` INTEGER NOT NULL, FOREIGN KEY(`category_id`) REFERENCES `categories`(`category_id`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
+        "fields": [
+          {
+            "fieldPath": "productId",
+            "columnName": "product_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "defaultUnit",
+            "columnName": "default_unit",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "defaultCurrencyCode",
+            "columnName": "default_currency_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "categoryId",
+            "columnName": "category_id",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "isActive",
+            "columnName": "is_active",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isDeleted",
+            "columnName": "is_deleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAtEpochMs",
+            "columnName": "deleted_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "createdAtEpochMs",
+            "columnName": "created_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAtEpochMs",
+            "columnName": "updated_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "product_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_products_name",
+            "unique": true,
+            "columnNames": [
+              "name"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_products_name` ON `${TABLE_NAME}` (`name`)"
+          },
+          {
+            "name": "index_products_category_id",
+            "unique": false,
+            "columnNames": [
+              "category_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_products_category_id` ON `${TABLE_NAME}` (`category_id`)"
+          },
+          {
+            "name": "index_products_is_active_is_deleted",
+            "unique": false,
+            "columnNames": [
+              "is_active",
+              "is_deleted"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_products_is_active_is_deleted` ON `${TABLE_NAME}` (`is_active`, `is_deleted`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "categories",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "category_id"
+            ],
+            "referencedColumns": [
+              "category_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "purchases",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`purchase_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `product_id` INTEGER NOT NULL, `transaction_id` INTEGER, `category_id` INTEGER, `merchant_name` TEXT, `quantity_minor` INTEGER NOT NULL, `quantity_scale` INTEGER NOT NULL, `unit` TEXT NOT NULL, `unit_price_minor` INTEGER NOT NULL, `total_amount_minor` INTEGER NOT NULL, `currency_code` TEXT NOT NULL, `purchase_date_epoch_day` INTEGER NOT NULL, `notes` TEXT, `is_deleted` INTEGER NOT NULL, `deleted_at_epoch_ms` INTEGER, `created_at_epoch_ms` INTEGER NOT NULL, `updated_at_epoch_ms` INTEGER NOT NULL, FOREIGN KEY(`product_id`) REFERENCES `products`(`product_id`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`transaction_id`) REFERENCES `transactions`(`transaction_id`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`category_id`) REFERENCES `categories`(`category_id`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
+        "fields": [
+          {
+            "fieldPath": "purchaseId",
+            "columnName": "purchase_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "productId",
+            "columnName": "product_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "transactionId",
+            "columnName": "transaction_id",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "categoryId",
+            "columnName": "category_id",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "merchantName",
+            "columnName": "merchant_name",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "quantityMinor",
+            "columnName": "quantity_minor",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quantityScale",
+            "columnName": "quantity_scale",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unit",
+            "columnName": "unit",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unitPriceMinor",
+            "columnName": "unit_price_minor",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalAmountMinor",
+            "columnName": "total_amount_minor",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currencyCode",
+            "columnName": "currency_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "purchaseDateEpochDay",
+            "columnName": "purchase_date_epoch_day",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "isDeleted",
+            "columnName": "is_deleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAtEpochMs",
+            "columnName": "deleted_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "createdAtEpochMs",
+            "columnName": "created_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAtEpochMs",
+            "columnName": "updated_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "purchase_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_purchases_product_id_purchase_date_epoch_day",
+            "unique": false,
+            "columnNames": [
+              "product_id",
+              "purchase_date_epoch_day"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_purchases_product_id_purchase_date_epoch_day` ON `${TABLE_NAME}` (`product_id`, `purchase_date_epoch_day`)"
+          },
+          {
+            "name": "index_purchases_transaction_id",
+            "unique": false,
+            "columnNames": [
+              "transaction_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_purchases_transaction_id` ON `${TABLE_NAME}` (`transaction_id`)"
+          },
+          {
+            "name": "index_purchases_category_id_purchase_date_epoch_day",
+            "unique": false,
+            "columnNames": [
+              "category_id",
+              "purchase_date_epoch_day"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_purchases_category_id_purchase_date_epoch_day` ON `${TABLE_NAME}` (`category_id`, `purchase_date_epoch_day`)"
+          },
+          {
+            "name": "index_purchases_merchant_name",
+            "unique": false,
+            "columnNames": [
+              "merchant_name"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_purchases_merchant_name` ON `${TABLE_NAME}` (`merchant_name`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "products",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "product_id"
+            ],
+            "referencedColumns": [
+              "product_id"
+            ]
+          },
+          {
+            "table": "transactions",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "transaction_id"
+            ],
+            "referencedColumns": [
+              "transaction_id"
+            ]
+          },
+          {
+            "table": "categories",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "category_id"
+            ],
+            "referencedColumns": [
+              "category_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "product_price_history",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`price_history_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `product_id` INTEGER NOT NULL, `as_of_date_epoch_day` INTEGER NOT NULL, `unit_price_minor` INTEGER NOT NULL, `currency_code` TEXT NOT NULL, `source` TEXT, `notes` TEXT, `created_at_epoch_ms` INTEGER NOT NULL, `is_deleted` INTEGER NOT NULL, `deleted_at_epoch_ms` INTEGER, `updated_at_epoch_ms` INTEGER NOT NULL, FOREIGN KEY(`product_id`) REFERENCES `products`(`product_id`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
+        "fields": [
+          {
+            "fieldPath": "priceHistoryId",
+            "columnName": "price_history_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "productId",
+            "columnName": "product_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "asOfDateEpochDay",
+            "columnName": "as_of_date_epoch_day",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unitPriceMinor",
+            "columnName": "unit_price_minor",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currencyCode",
+            "columnName": "currency_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "createdAtEpochMs",
+            "columnName": "created_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isDeleted",
+            "columnName": "is_deleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deletedAtEpochMs",
+            "columnName": "deleted_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "updatedAtEpochMs",
+            "columnName": "updated_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "price_history_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_product_price_history_product_id_as_of_date_epoch_day",
+            "unique": true,
+            "columnNames": [
+              "product_id",
+              "as_of_date_epoch_day"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_product_price_history_product_id_as_of_date_epoch_day` ON `${TABLE_NAME}` (`product_id`, `as_of_date_epoch_day`)"
+          },
+          {
+            "name": "index_product_price_history_product_id_is_deleted_as_of_date_epoch_day",
+            "unique": false,
+            "columnNames": [
+              "product_id",
+              "is_deleted",
+              "as_of_date_epoch_day"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_product_price_history_product_id_is_deleted_as_of_date_epoch_day` ON `${TABLE_NAME}` (`product_id`, `is_deleted`, `as_of_date_epoch_day`)"
+          },
+          {
+            "name": "index_product_price_history_is_deleted_as_of_date_epoch_day",
+            "unique": false,
+            "columnNames": [
+              "is_deleted",
+              "as_of_date_epoch_day"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_product_price_history_is_deleted_as_of_date_epoch_day` ON `${TABLE_NAME}` (`is_deleted`, `as_of_date_epoch_day`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "products",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "product_id"
+            ],
+            "referencedColumns": [
+              "product_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "mutual_funds",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`fund_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `code` TEXT NOT NULL, `currency_code` TEXT NOT NULL, `is_active` INTEGER NOT NULL, `is_deleted` INTEGER NOT NULL, `created_at_epoch_ms` INTEGER NOT NULL, `updated_at_epoch_ms` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "fundId",
+            "columnName": "fund_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "code",
+            "columnName": "code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currencyCode",
+            "columnName": "currency_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isActive",
+            "columnName": "is_active",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isDeleted",
+            "columnName": "is_deleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAtEpochMs",
+            "columnName": "created_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAtEpochMs",
+            "columnName": "updated_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "fund_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_mutual_funds_code",
+            "unique": true,
+            "columnNames": [
+              "code"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_mutual_funds_code` ON `${TABLE_NAME}` (`code`)"
+          },
+          {
+            "name": "index_mutual_funds_is_active_is_deleted",
+            "unique": false,
+            "columnNames": [
+              "is_active",
+              "is_deleted"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_mutual_funds_is_active_is_deleted` ON `${TABLE_NAME}` (`is_active`, `is_deleted`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "mutual_fund_holdings",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`holding_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `fund_id` INTEGER NOT NULL, `investment_account_id` INTEGER NOT NULL, `units_minor` INTEGER NOT NULL, `units_scale` INTEGER NOT NULL, `updated_at_epoch_ms` INTEGER NOT NULL, FOREIGN KEY(`fund_id`) REFERENCES `mutual_funds`(`fund_id`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`investment_account_id`) REFERENCES `accounts`(`account_id`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
+        "fields": [
+          {
+            "fieldPath": "holdingId",
+            "columnName": "holding_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fundId",
+            "columnName": "fund_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "investmentAccountId",
+            "columnName": "investment_account_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unitsMinor",
+            "columnName": "units_minor",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unitsScale",
+            "columnName": "units_scale",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAtEpochMs",
+            "columnName": "updated_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "holding_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_mutual_fund_holdings_fund_id_investment_account_id",
+            "unique": true,
+            "columnNames": [
+              "fund_id",
+              "investment_account_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_mutual_fund_holdings_fund_id_investment_account_id` ON `${TABLE_NAME}` (`fund_id`, `investment_account_id`)"
+          },
+          {
+            "name": "index_mutual_fund_holdings_investment_account_id",
+            "unique": false,
+            "columnNames": [
+              "investment_account_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_mutual_fund_holdings_investment_account_id` ON `${TABLE_NAME}` (`investment_account_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "mutual_funds",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "fund_id"
+            ],
+            "referencedColumns": [
+              "fund_id"
+            ]
+          },
+          {
+            "table": "accounts",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "investment_account_id"
+            ],
+            "referencedColumns": [
+              "account_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "mutual_fund_transactions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`investment_transaction_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `fund_id` INTEGER NOT NULL, `investment_account_id` INTEGER NOT NULL, `cash_account_id` INTEGER, `transaction_type` TEXT NOT NULL, `units_minor` INTEGER NOT NULL, `units_scale` INTEGER NOT NULL, `nav_minor` INTEGER NOT NULL, `total_amount_minor` INTEGER NOT NULL, `currency_code` TEXT NOT NULL, `transaction_date_epoch_day` INTEGER NOT NULL, `linked_cash_transaction_id` INTEGER, `notes` TEXT, `created_at_epoch_ms` INTEGER NOT NULL, FOREIGN KEY(`fund_id`) REFERENCES `mutual_funds`(`fund_id`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`investment_account_id`) REFERENCES `accounts`(`account_id`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`cash_account_id`) REFERENCES `accounts`(`account_id`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`linked_cash_transaction_id`) REFERENCES `transactions`(`transaction_id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "investmentTransactionId",
+            "columnName": "investment_transaction_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fundId",
+            "columnName": "fund_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "investmentAccountId",
+            "columnName": "investment_account_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cashAccountId",
+            "columnName": "cash_account_id",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "transactionType",
+            "columnName": "transaction_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unitsMinor",
+            "columnName": "units_minor",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unitsScale",
+            "columnName": "units_scale",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "navMinor",
+            "columnName": "nav_minor",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalAmountMinor",
+            "columnName": "total_amount_minor",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currencyCode",
+            "columnName": "currency_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "transactionDateEpochDay",
+            "columnName": "transaction_date_epoch_day",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "linkedCashTransactionId",
+            "columnName": "linked_cash_transaction_id",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "createdAtEpochMs",
+            "columnName": "created_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "investment_transaction_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_mutual_fund_transactions_fund_id_investment_account_id_transaction_date_epoch_day",
+            "unique": false,
+            "columnNames": [
+              "fund_id",
+              "investment_account_id",
+              "transaction_date_epoch_day"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_mutual_fund_transactions_fund_id_investment_account_id_transaction_date_epoch_day` ON `${TABLE_NAME}` (`fund_id`, `investment_account_id`, `transaction_date_epoch_day`)"
+          },
+          {
+            "name": "index_mutual_fund_transactions_investment_account_id",
+            "unique": false,
+            "columnNames": [
+              "investment_account_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_mutual_fund_transactions_investment_account_id` ON `${TABLE_NAME}` (`investment_account_id`)"
+          },
+          {
+            "name": "index_mutual_fund_transactions_cash_account_id",
+            "unique": false,
+            "columnNames": [
+              "cash_account_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_mutual_fund_transactions_cash_account_id` ON `${TABLE_NAME}` (`cash_account_id`)"
+          },
+          {
+            "name": "index_mutual_fund_transactions_linked_cash_transaction_id",
+            "unique": true,
+            "columnNames": [
+              "linked_cash_transaction_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_mutual_fund_transactions_linked_cash_transaction_id` ON `${TABLE_NAME}` (`linked_cash_transaction_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "mutual_funds",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "fund_id"
+            ],
+            "referencedColumns": [
+              "fund_id"
+            ]
+          },
+          {
+            "table": "accounts",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "investment_account_id"
+            ],
+            "referencedColumns": [
+              "account_id"
+            ]
+          },
+          {
+            "table": "accounts",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "cash_account_id"
+            ],
+            "referencedColumns": [
+              "account_id"
+            ]
+          },
+          {
+            "table": "transactions",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "linked_cash_transaction_id"
+            ],
+            "referencedColumns": [
+              "transaction_id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "mutual_fund_nav_history",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`nav_id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `fund_id` INTEGER NOT NULL, `as_of_date_epoch_day` INTEGER NOT NULL, `nav_minor` INTEGER NOT NULL, `currency_code` TEXT NOT NULL, `source` TEXT, `notes` TEXT, `created_at_epoch_ms` INTEGER NOT NULL, FOREIGN KEY(`fund_id`) REFERENCES `mutual_funds`(`fund_id`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
+        "fields": [
+          {
+            "fieldPath": "navId",
+            "columnName": "nav_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fundId",
+            "columnName": "fund_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "asOfDateEpochDay",
+            "columnName": "as_of_date_epoch_day",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "navMinor",
+            "columnName": "nav_minor",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currencyCode",
+            "columnName": "currency_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "createdAtEpochMs",
+            "columnName": "created_at_epoch_ms",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "nav_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_mutual_fund_nav_history_fund_id_as_of_date_epoch_day",
+            "unique": true,
+            "columnNames": [
+              "fund_id",
+              "as_of_date_epoch_day"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_mutual_fund_nav_history_fund_id_as_of_date_epoch_day` ON `${TABLE_NAME}` (`fund_id`, `as_of_date_epoch_day`)"
+          },
+          {
+            "name": "index_mutual_fund_nav_history_as_of_date_epoch_day_fund_id",
+            "unique": false,
+            "columnNames": [
+              "as_of_date_epoch_day",
+              "fund_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_mutual_fund_nav_history_as_of_date_epoch_day_fund_id` ON `${TABLE_NAME}` (`as_of_date_epoch_day`, `fund_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "mutual_funds",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "fund_id"
+            ],
+            "referencedColumns": [
+              "fund_id"
+            ]
+          }
+        ]
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e66d02ceeeb982753e6067e803f8913f')"
+    ]
+  }
+}

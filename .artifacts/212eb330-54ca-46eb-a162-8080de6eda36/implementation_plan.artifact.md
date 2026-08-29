@@ -8,7 +8,7 @@ I will upgrade the project to Kotlin `2.0.20` to enable the new Compose Compiler
 
 ### Build Configuration
 
-#### [MODIFY] [libs.versions.toml](file:///D:/Android/financial_app/gradle/libs.versions.toml)
+#### [MODIFY] [libs.versions.toml](file:///D:/Android/finance_app/gradle/libs.versions.toml)
 - Upgrade `kotlin` to `2.0.20`.
 - Upgrade `ksp` to `2.0.20-1.0.25`.
 - Remove the `composeCompiler` version as it's no longer required with the Kotlin Compose plugin.

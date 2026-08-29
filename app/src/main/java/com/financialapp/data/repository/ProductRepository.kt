@@ -14,6 +14,7 @@ interface ProductRepository {
     suspend fun getActiveProducts(): List<Product>
     suspend fun getProductsByCategory(categoryId: Long): List<Product>
     suspend fun softDelete(productId: Long, deletedAtEpochMs: Long, updatedAtEpochMs: Long): Int
+    suspend fun setActive(productId: Long, isActive: Boolean): Boolean
 }
 
 class LocalProductRepository(
@@ -45,6 +46,12 @@ class LocalProductRepository(
 
     override suspend fun softDelete(productId: Long, deletedAtEpochMs: Long, updatedAtEpochMs: Long): Int =
         productDao.softDelete(productId, deletedAtEpochMs, updatedAtEpochMs)
+
+    override suspend fun setActive(productId: Long, isActive: Boolean): Boolean {
+        val product = productDao.getById(productId) ?: throw IllegalArgumentException("Product does not exist")
+        require(!product.isDeleted) { "Deleted products cannot change state" }
+        return productDao.setActive(productId, isActive, System.currentTimeMillis()) == 1
+    }
 }
 
 private fun Product.toEntity(now: Long) = ProductEntity(

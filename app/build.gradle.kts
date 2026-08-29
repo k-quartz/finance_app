@@ -96,6 +96,7 @@ dependencies {
     implementation(libs.hilt.android)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.material)
+    implementation(libs.androidx.security.crypto)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
 

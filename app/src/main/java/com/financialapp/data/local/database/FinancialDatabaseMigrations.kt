@@ -543,4 +543,14 @@ object FinancialDatabaseMigrations {
             database.execSQL("CREATE UNIQUE INDEX index_mutual_fund_nav_history_fund_id_as_of_date_epoch_day ON mutual_fund_nav_history (fund_id, as_of_date_epoch_day)")
         }
     }
+
+    val MIGRATION_8_9 = object : Migration(8, 9) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            ensureIndex(database, "index_transactions_account_id_is_deleted_occurred_date_epoch_day", "CREATE INDEX index_transactions_account_id_is_deleted_occurred_date_epoch_day ON transactions (account_id, is_deleted, occurred_date_epoch_day)")
+            ensureIndex(database, "index_transactions_is_deleted_occurred_date_epoch_day", "CREATE INDEX index_transactions_is_deleted_occurred_date_epoch_day ON transactions (is_deleted, occurred_date_epoch_day)")
+            ensureIndex(database, "index_product_price_history_product_id_is_deleted_as_of_date_epoch_day", "CREATE INDEX index_product_price_history_product_id_is_deleted_as_of_date_epoch_day ON product_price_history (product_id, is_deleted, as_of_date_epoch_day)")
+            ensureIndex(database, "index_product_price_history_is_deleted_as_of_date_epoch_day", "CREATE INDEX index_product_price_history_is_deleted_as_of_date_epoch_day ON product_price_history (is_deleted, as_of_date_epoch_day)")
+            ensureIndex(database, "index_mutual_fund_nav_history_as_of_date_epoch_day_fund_id", "CREATE INDEX index_mutual_fund_nav_history_as_of_date_epoch_day_fund_id ON mutual_fund_nav_history (as_of_date_epoch_day, fund_id)")
+        }
+    }
 }

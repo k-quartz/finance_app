@@ -23,6 +23,9 @@ interface MutualFundDao {
     @Query("SELECT * FROM mutual_funds WHERE is_deleted = 0 AND is_active = 1 ORDER BY name ASC")
     suspend fun getActiveFunds(): List<MutualFundEntity>
 
+    @Query("SELECT * FROM mutual_fund_transactions ORDER BY transaction_date_epoch_day DESC, investment_transaction_id DESC")
+    suspend fun getAllTransactionsOrdered(): List<MutualFundTransactionEntity>
+
     @Insert(onConflict = androidx.room.OnConflictStrategy.ABORT)
     suspend fun insertTransaction(transaction: MutualFundTransactionEntity): Long
 
@@ -53,9 +56,12 @@ interface MutualFundDao {
     @Query("SELECT * FROM mutual_fund_nav_history ORDER BY nav_id ASC")
     suspend fun getAllNavHistory(): List<MutualFundNavEntity>
 
+    @Query("SELECT * FROM mutual_fund_nav_history ORDER BY as_of_date_epoch_day DESC, nav_id DESC")
+    suspend fun getNavHistoryOrdered(): List<MutualFundNavEntity>
+
     @Query("SELECT * FROM mutual_fund_nav_history WHERE fund_id = :fundId AND as_of_date_epoch_day <= :dateEpochDay ORDER BY as_of_date_epoch_day DESC LIMIT 1")
     suspend fun getLatestNav(fundId: Long, dateEpochDay: Long): MutualFundNavEntity?
 
-    @Query("SELECT * FROM mutual_fund_nav_history WHERE as_of_date_epoch_day <= :dateEpochDay ORDER BY fund_id ASC, as_of_date_epoch_day DESC")
+    @Query("SELECT * FROM mutual_fund_nav_history WHERE as_of_date_epoch_day <= :dateEpochDay ORDER BY as_of_date_epoch_day DESC, fund_id ASC")
     suspend fun getLatestNavsOnOrBefore(dateEpochDay: Long): List<MutualFundNavEntity>
 }

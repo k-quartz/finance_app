@@ -74,7 +74,7 @@ class BackupRepositoryTest {
 
             val exported = JSONObject(backupJson)
             assertEquals(1, exported.getInt("formatVersion"))
-            assertEquals(8, exported.getInt("databaseVersion"))
+            assertEquals(9, exported.getInt("databaseVersion"))
             assertTrue(exported.getJSONArray("accounts").length() > 0)
         }
     }
@@ -111,6 +111,21 @@ class BackupRepositoryTest {
         }
     }
 
+    @Test
+    fun `duplicate primary keys are rejected before restore mutation`() {
+        runBlocking {
+            val backup = JSONObject(sourceRepository.exportBackup())
+            val accounts = backup.getJSONArray("accounts")
+            accounts.put(accounts.getJSONObject(0))
+
+            assertThrows(IllegalArgumentException::class.java) {
+                runBlocking { targetRepository.restoreBackup(backup.toString()) }
+            }
+
+            assertTrue(targetDatabase.accountDao().getAll().isEmpty())
+        }
+    }
+
     private fun buildDatabase(): AppDatabase = Room.inMemoryDatabaseBuilder(
         ApplicationProvider.getApplicationContext(),
         AppDatabase::class.java,
@@ -126,6 +141,7 @@ class BackupRepositoryTest {
         purchaseDao = database.purchaseDao(),
         mutualFundDao = database.mutualFundDao(),
         clock = Clock.fixed(Instant.parse("2026-08-20T12:00:00Z"), ZoneOffset.UTC),
+        backupCipher = com.financialapp.security.PlaintextBackupCipher(),
     )
 
     private suspend fun seedDatabase(database: AppDatabase) {

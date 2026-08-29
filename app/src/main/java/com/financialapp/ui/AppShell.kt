@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Backup
 import androidx.compose.material.icons.outlined.Dashboard
+import androidx.compose.material.icons.outlined.AccountBalance
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -18,6 +19,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.financialapp.ui.backup.BackupRoute
 import com.financialapp.ui.dashboard.DashboardRoute
+import com.financialapp.ui.workflows.WorkflowsRoute
 
 private enum class AppDestination(
     val route: String,
@@ -25,6 +27,7 @@ private enum class AppDestination(
 ) {
     DASHBOARD("dashboard", "Dashboard"),
     BACKUP("backup", "Backup"),
+    WORKFLOWS("workflows", "Manage"),
 }
 
 @Composable
@@ -41,6 +44,7 @@ fun AppShell() {
                         selected = currentRoute == destination.route,
                         onClick = {
                             navController.navigate(destination.route) {
+                                popUpTo(AppDestination.DASHBOARD.route) { saveState = true }
                                 launchSingleTop = true
                                 restoreState = true
                             }
@@ -50,6 +54,7 @@ fun AppShell() {
                                 imageVector = when (destination) {
                                     AppDestination.DASHBOARD -> Icons.Outlined.Dashboard
                                     AppDestination.BACKUP -> Icons.Outlined.Backup
+                                    AppDestination.WORKFLOWS -> Icons.Outlined.AccountBalance
                                 },
                                 contentDescription = destination.label,
                             )
@@ -67,6 +72,7 @@ fun AppShell() {
         ) {
             composable(AppDestination.DASHBOARD.route) { DashboardRoute() }
             composable(AppDestination.BACKUP.route) { BackupRoute() }
+            composable(AppDestination.WORKFLOWS.route) { WorkflowsRoute() }
         }
     }
 }

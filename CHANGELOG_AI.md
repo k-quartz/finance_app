@@ -1,6 +1,120 @@
 # AI Work Log
 
+## Phase 18 entry
+
+- Date: 2026-08-22
+- AI tool/agent: GitHub Copilot
+- Phase: Phase 18 — End-to-End V1 Validation & Release Readiness
+- Task: Completed V1 traceability and release validation, added quarterly analytics support and Manage selection, and added a realistic repository integration regression covering financial workflows and complete backup restoration.
+- Tests added: Quarterly analytics boundary regression and Phase 18 end-to-end workflow regression.
+- Tests executed: `clean`, `assembleDebug`, `test`, `lint`, `:app:testDebugUnitTest --no-daemon`, and `git diff --check` all passed on the final code state.
+- Result: Phase 18 implementation, audit remediation, documentation, and final verification gate pass.
+- Known limitations: V1 remains INR-only and local-first; restore requires the current backup database version; performance thresholds are unit-test guardrails rather than device benchmarks.
+- Unresolved issues: None within Phase 18 scope.
+
+## Phase 17 entry
+
+- Date: 2026-08-22
+- AI tool/agent: GitHub Copilot
+- Phase: Phase 17 — Presentation, Navigation & User Workflows
+- Task: Performed the final Phase 17 audit, fixed missing Manage UI imports and preserved loaded workflow data across save and analysis loading/error transitions, and added Android back-navigation regression coverage.
+- Tests executed: `git diff --check`, `clean`, `assembleDebug`, `test`, `lint`, and `:app:testDebugUnitTest --no-daemon` all passed with JDK 17.
+- Result: Phase 17 implementation and final verification gate pass. Direct ViewModel state-transition tests and realistic end-to-end financial workflow tests remain Phase 18 scope.
+- Known limitations: V1 remains INR-only and local-first.
+- Unresolved issues: None within Phase 17 scope.
+
+## Phase 17 entry
+
+- Date: 2026-08-22
+- AI tool/agent: GitHub Copilot
+- Phase: Phase 17 — Presentation, Navigation & User Workflows
+- Task: Completed the Manage workflow surface with account/category/product lifecycle actions, transaction correction and reads, purchase/product reads, investment and NAV history reads, price history reads, recurring analysis states, saveable section state, and repository-backed refresh/error handling.
+- Files changed:
+  - app/src/main/java/com/financialapp/data/local/dao/AccountDao.kt
+  - app/src/main/java/com/financialapp/data/local/dao/MutualFundDao.kt
+  - app/src/main/java/com/financialapp/data/local/dao/ProductDao.kt
+  - app/src/main/java/com/financialapp/data/repository/AccountRepository.kt
+  - app/src/main/java/com/financialapp/data/repository/MutualFundRepository.kt
+  - app/src/main/java/com/financialapp/data/repository/ProductRepository.kt
+  - app/src/main/java/com/financialapp/ui/workflows/WorkflowsScreen.kt
+  - app/src/main/java/com/financialapp/ui/workflows/WorkflowsViewModel.kt
+  - app/src/androidTest/java/com/financialapp/ui/AppNavigationTest.kt
+  - IMPLEMENTATION_PLAN.md
+- Tests added: Manage section reachability and correction/history control instrumentation regression.
+- Result: Phase 17 implementation is complete pending the final verification gate.
+- Known limitations: Full realistic end-to-end financial validation remains Phase 18 scope; V1 remains INR-only and local-first.
+- Unresolved issues: Gradle compiler invocations on this workstation may terminate silently before reporting a result.
+
+- Date: 2026-08-22
+- AI tool/agent: GitHub Copilot
+- Phase: Phase 17 — Presentation, Navigation & User Workflows
+- Task: Completed the persistent Manage destination and repository-backed Compose workflows for implemented V1 account, category, transaction, purchase, investment, price-history, analytics, recurring-analysis, and backup capabilities.
+- Files changed:
+  - app/src/main/java/com/financialapp/ui/AppShell.kt
+  - app/src/main/java/com/financialapp/ui/workflows/WorkflowsScreen.kt
+  - app/src/main/java/com/financialapp/ui/workflows/WorkflowsViewModel.kt
+  - app/src/androidTest/java/com/financialapp/ui/AppNavigationTest.kt
+  - IMPLEMENTATION_PLAN.md
+  - ARCHITECTURE.md
+  - TESTING_STRATEGY.md
+- Tests added: Manage destination reachability instrumentation regression.
+- Result: Phase 17 presentation implementation and audit remediation are complete; the remaining end-to-end financial validation belongs to Phase 18.
+- Known limitations: Phase 18 still requires realistic end-to-end validation; no Phase 17 schema migration was needed.
+- Unresolved issues: None within Phase 17 scope.
+
 This file records AI-assisted engineering work and future architectural decisions. Each future entry should use the same structure.
+
+## Phase 16 entry
+
+- Date: 2026-08-21
+- AI tool/agent: GitHub Copilot
+- Phase: Phase 16 — Production readiness review
+- Task: Completed the production-readiness audit, hardened transactional backup export and duplicate-key restore validation, aligned persisted mutual-fund holdings with date-ordered historical replay, and removed Room entity exposure from the standalone account repository.
+- Files changed:
+  - app/src/main/java/com/financialapp/data/repository/AccountRepository.kt
+  - app/src/main/java/com/financialapp/data/repository/BackupRepository.kt
+  - app/src/main/java/com/financialapp/data/repository/MutualFundRepository.kt
+  - app/src/test/java/com/financialapp/data/repository/BackupRepositoryTest.kt
+  - app/src/test/java/com/financialapp/data/repository/MutualFundRepositoryTest.kt
+  - ARCHITECTURE.md
+  - IMPLEMENTATION_PLAN.md
+  - TESTING_STRATEGY.md
+- Tests added:
+  - Duplicate backup primary-key rejection before mutation
+  - Backdated investment redemption rollback
+- Result: Audit remediation is complete; the final verification gate is blocked by workstation Gradle test JVM memory exhaustion.
+- Known limitations:
+  - INR-only V1, current-schema restore compatibility, and unit-test performance baselines remain documented release constraints.
+- Unresolved issues:
+  - None within Phase 16 scope.
+
+## Phase 15 entry
+
+- Date: 2026-08-21
+- AI tool/agent: GitHub Copilot
+- Phase: Phase 15 — Performance testing
+- Task: Added large-history analytics benchmarking, Room query-plan regression checks, additive version 9 performance indexes, and batched dashboard price-history reads.
+- Files changed:
+  - PERFORMANCE_BASELINE.md
+  - app/src/main/java/com/financialapp/data/local/database/AppDatabase.kt
+  - app/src/main/java/com/financialapp/data/local/database/FinancialDatabaseMigrations.kt
+  - app/src/main/java/com/financialapp/data/local/dao/ProductDao.kt
+  - app/src/main/java/com/financialapp/data/local/dao/ProductPriceHistoryDao.kt
+  - app/src/main/java/com/financialapp/data/local/dao/MutualFundDao.kt
+  - app/src/main/java/com/financialapp/data/repository/ProductPriceHistoryRepository.kt
+  - app/src/test/java/com/financialapp/performance/PerformanceBaselineTest.kt
+  - app/src/test/java/com/financialapp/performance/DatabaseQueryPlanTest.kt
+- Tests added:
+  - 50,000-transaction analytics baseline
+  - Room query-plan index regression coverage
+  - version 8-to-9 index migration coverage
+- Architectural decisions:
+  - Performance indexes are additive and migration-safe.
+  - Dashboard price comparison uses two batch reads instead of per-product query loops.
+- Known limitations:
+  - Timing baselines are unit-test guardrails rather than device-specific production measurements.
+- Unresolved issues:
+  - None within the current phase scope.
 
 ## Format
 
@@ -15,6 +129,36 @@ This file records AI-assisted engineering work and future architectural decision
 - Known limitations:
 - Architectural decisions:
 - Unresolved issues:
+
+## Phase 14 entry
+
+- Date: 2026-08-21
+- AI tool/agent: GitHub Copilot
+- Phase: Phase 14 — Security hardening
+- Task: Hardened the local backup/export flow by encrypting snapshot payloads with an Android Keystore-backed AES-GCM key stored in `EncryptedSharedPreferences`, kept restore backward-compatible with legacy plaintext snapshots, and added focused regression tests for encryption/decryption correctness and secure-key persistence.
+- Files changed:
+  - app/src/main/java/com/financialapp/security/BackupCipher.kt
+  - app/src/main/java/com/financialapp/data/repository/BackupRepository.kt
+  - app/src/main/java/com/financialapp/di/RepositoryModule.kt
+  - app/src/test/java/com/financialapp/security/SecureBackupCodecTest.kt
+  - app/build.gradle.kts
+  - gradle/libs.versions.toml
+  - ARCHITECTURE.md
+  - IMPLEMENTATION_PLAN.md
+- Tests added:
+  - Secure backup round-trip encryption test
+  - Secure preference persistence regression test
+- Tests executed:
+  - `:app:testDebugUnitTest --tests com.financialapp.security.SecureBackupCodecTest --no-daemon`
+- Result: The backup encryption path compiles and the focused regression test passes once the AndroidX Security API contract is matched.
+- Known limitations:
+  - Full app-wide verification still must be completed with the repository’s final verification sequence.
+- Architectural decisions:
+  - Exported backup content is encrypted at rest using Android Keystore-backed storage.
+  - Decryption is performed only when restoring a backup, and malformed ciphertext is rejected deterministically.
+  - Legacy plaintext backup files remain readable to avoid breaking older local export artifacts.
+- Unresolved issues:
+  - None within the current phase scope.
 
 ## Phase 1 entry
 

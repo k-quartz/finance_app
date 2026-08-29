@@ -18,6 +18,9 @@ interface ProductPriceHistoryDao {
     @Query("SELECT * FROM product_price_history WHERE product_id = :productId AND is_deleted = 0 ORDER BY as_of_date_epoch_day DESC")
     suspend fun getHistoryForProduct(productId: Long): List<ProductPriceHistoryEntity>
 
+    @Query("SELECT * FROM product_price_history WHERE product_id IN (:productIds) AND is_deleted = 0 ORDER BY product_id ASC, as_of_date_epoch_day DESC")
+    suspend fun getHistoryForProducts(productIds: List<Long>): List<ProductPriceHistoryEntity>
+
     @Query("SELECT * FROM product_price_history WHERE product_id = :productId AND is_deleted = 0 AND as_of_date_epoch_day = :dateEpochDay LIMIT 1")
     suspend fun getPriceForDate(productId: Long, dateEpochDay: Long): ProductPriceHistoryEntity?
 

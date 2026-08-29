@@ -18,8 +18,8 @@ import androidx.room.PrimaryKey
     ],
     indices = [
         Index(value = ["product_id", "as_of_date_epoch_day"], unique = true),
-            Index(value = ["product_id", "as_of_date_epoch_day", "currency_code"]),
-            Index(value = ["is_deleted"]),
+        Index(value = ["product_id", "is_deleted", "as_of_date_epoch_day"]),
+        Index(value = ["is_deleted", "as_of_date_epoch_day"]),
     ],
 )
 data class ProductPriceHistoryEntity(

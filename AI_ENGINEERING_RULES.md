@@ -1,3 +1,80 @@
+## 0. AI Output and Communication Rules
+
+The AI agent is primarily an implementation and verification executor, not a
+narrator.
+
+During normal execution:
+
+- Do not explain implementation steps to the user.
+- Do not summarize every file changed.
+- Do not describe routine commands being executed.
+- Do not provide progress reports unless explicitly requested.
+- Do not repeat requirements already present in repository documentation.
+- Do not explain successful test results individually.
+- Do not provide unsolicited architectural explanations.
+- Do not ask for confirmation for decisions that are already defined by the
+  repository rules.
+- Do not stop to report routine findings that can be fixed within the current
+  phase.
+
+The agent should silently:
+
+1. Inspect the required files and source code.
+2. Implement the requested phase.
+3. Audit the implementation.
+4. Fix HIGH and MEDIUM findings within scope.
+5. Add or update regression tests.
+6. Update required documentation.
+7. Run the required verification.
+8. Remediate failures and repeat verification.
+
+### Normal completion output
+
+When all requirements and verification gates pass, output only:
+
+`PHASE X COMPLETE — AUDIT PASS`
+
+Do not provide a summary unless explicitly requested.
+
+### Blocked execution
+
+If the agent cannot legitimately complete the phase, output only a concise
+blocking report containing:
+
+- `PHASE X BLOCKED`
+- the specific blocker
+- the command or operation that failed
+- whether the blocker is code-related or environment/tool-related
+- the minimum action required to continue
+
+Do not provide general explanations, implementation summaries, or unrelated
+diagnostics.
+
+### User intervention
+
+Ask the user a question only when:
+
+- a required architectural/product decision is genuinely ambiguous and cannot
+  be resolved from repository documentation;
+- an operation requires explicit user authorization;
+- the environment prevents further progress and the agent cannot resolve it
+  safely.
+
+Otherwise, make the appropriate implementation decision according to the
+repository contract and continue.
+
+### Token-efficiency rule
+
+Prefer execution over narration.
+
+Do not spend output tokens describing work that can be represented by successful
+execution and the final completion status.
+
+Detailed explanations, changed-file summaries, test inventories, audit reports,
+or implementation rationale should only be produced when the user explicitly
+requests them or when they are necessary to resolve a blocker.
+
+
 # AI Engineering Rules
 
 This document defines the mandatory workflow for all AI-assisted development in this repository.
@@ -476,3 +553,41 @@ git diff --check
 
 ## 9.Failure Inspection
  A tool/environment failure is not a passing verification result. The AI must investigate and attempt reasonable recovery. It must not bypass, weaken, remove, or substitute required verification commands merely to obtain a successful result.
+
+
+ ### Minimal Output Mode
+
+The agent must remain silent during normal execution.
+
+Do not explain implementation steps, command execution, successful tests,
+code changes, or progress.
+
+Only report:
+
+- `PHASE X COMPLETE — AUDIT PASS` when all requirements and verification gates pass.
+- `PHASE X INCOMPLETE — BLOCKED` when a genuine blocker prevents completion,
+  followed only by the blocker and the action required.
+- `USER ACTION REQUIRED` when human intervention is genuinely necessary.
+
+Do not report intermediate results unless they reveal a blocker that cannot
+be automatically resolved.
+
+Do not summarize work that is already recorded in repository documentation.
+
+Prioritize token-efficient execution over conversational output.
+
+
+### Windows Gradle Execution
+
+When executing Gradle commands on Windows, if a command is long-running or
+produces no output for an extended period, do not terminate it because of
+terminal inactivity.
+
+Use asynchronous/background execution and poll the process output until the
+command completes.
+
+A terminal execution timeout or interactive `Terminate batch job (Y/N)?`
+prompt must not be treated as a Gradle build failure without first determining
+whether the underlying Gradle process is still running.
+
+The completion status must be based on the actual Gradle exit result.
