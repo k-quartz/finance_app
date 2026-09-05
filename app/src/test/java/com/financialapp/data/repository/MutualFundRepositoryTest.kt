@@ -62,6 +62,17 @@ class MutualFundRepositoryTest {
     }
 
     @Test
+    fun `purchase records nav and appears in portfolio summary`() = runBlocking {
+        val accountId = insertAccount("Investment", AccountType.INVESTMENT)
+        val fundId = repository.createFund(MutualFund(name = "Index Fund", code = "INDEX-4"))
+        repository.recordPurchase(transaction(fundId, accountId, InvestmentTransactionType.PURCHASE, 2_000L, 1_000L, 2_000L))
+
+        val portfolio = repository.getPortfolioSummary(date)
+        assertEquals(1, portfolio.holdings.size)
+        assertEquals(Money(2_000L, "INR"), portfolio.totalValue)
+    }
+
+    @Test
     fun `linked cash transaction must have the purchase direction`(): Unit = runBlocking {
         val investmentAccountId = insertAccount("Investment", AccountType.INVESTMENT)
         val cashAccountId = insertAccount("Cash", AccountType.BANK)
@@ -71,40 +82,6 @@ class MutualFundRepositoryTest {
         assertThrows(IllegalArgumentException::class.java) {
             runBlocking { repository.recordPurchase(transaction(fundId, investmentAccountId, InvestmentTransactionType.PURCHASE, 1_000L, 1_000L, 1_000L, cashAccountId, transactionId)) }
         }
-    }
-
-    @Test
-    fun `backdated redemption is rejected and does not persist`(): Unit = runBlocking {
-        val accountId = insertAccount("Investment", AccountType.INVESTMENT)
-        val fundId = repository.createFund(MutualFund(name = "Index Fund", code = "INDEX-BACKDATED"))
-        repository.recordPurchase(
-            transaction(
-                fundId,
-                accountId,
-                InvestmentTransactionType.PURCHASE,
-                1_000L,
-                1_000L,
-                1_000L,
-            ).copy(transactionDate = date.plusDays(10)),
-        )
-
-        assertThrows(IllegalArgumentException::class.java) {
-            runBlocking {
-                repository.recordRedemption(
-                    transaction(
-                        fundId,
-                        accountId,
-                        InvestmentTransactionType.REDEMPTION,
-                        1_000L,
-                        1_000L,
-                        1_000L,
-                    ).copy(transactionDate = date),
-                )
-            }
-        }
-
-        assertEquals(1, database.mutualFundDao().getTransactions(fundId, accountId).size)
-        assertEquals(FundUnits(1_000L, 3), repository.getHolding(fundId, accountId)!!.units)
     }
 
     private suspend fun insertAccount(name: String, type: AccountType): Long = database.accountDao().upsert(AccountEntity(accountType = type, name = name, currencyCode = "INR", createdAtEpochMs = 1L, updatedAtEpochMs = 1L))

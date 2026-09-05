@@ -23,15 +23,15 @@ interface ProductDao {
     @Query("SELECT * FROM products WHERE product_id = :productId")
     suspend fun getById(productId: Long): ProductEntity?
 
-    @Query("SELECT * FROM products WHERE product_id IN (:productIds)")
-    suspend fun getByIds(productIds: List<Long>): List<ProductEntity>
-
     @Query("SELECT * FROM products WHERE category_id = :categoryId AND is_deleted = 0 ORDER BY name ASC")
     suspend fun getProductsByCategory(categoryId: Long): List<ProductEntity>
+
+    @Query("SELECT EXISTS(SELECT 1 FROM products WHERE LOWER(name) = LOWER(:name) AND is_deleted = 0 AND product_id != :excludedProductId)")
+    suspend fun hasDuplicateName(name: String, excludedProductId: Long): Boolean
 
     @Query("UPDATE products SET is_deleted = 1, deleted_at_epoch_ms = :deletedAtEpochMs, updated_at_epoch_ms = :updatedAtEpochMs WHERE product_id = :productId")
     suspend fun softDelete(productId: Long, deletedAtEpochMs: Long, updatedAtEpochMs: Long): Int
 
-    @Query("UPDATE products SET is_active = :isActive, updated_at_epoch_ms = :updatedAtEpochMs WHERE product_id = :productId AND is_deleted = 0")
+    @Query("UPDATE products SET is_active = :isActive, updated_at_epoch_ms = :updatedAtEpochMs WHERE product_id = :productId")
     suspend fun setActive(productId: Long, isActive: Boolean, updatedAtEpochMs: Long): Int
 }

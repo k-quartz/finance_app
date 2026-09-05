@@ -23,6 +23,7 @@ import com.financialapp.domain.model.MutualFundHolding
 import com.financialapp.domain.model.MutualFundHoldingValue
 import com.financialapp.domain.model.MutualFundPortfolioSummary
 import com.financialapp.domain.model.MutualFundReturn
+import com.financialapp.domain.model.MutualFundNavPoint
 import com.financialapp.domain.model.MutualFundTransaction
 import com.financialapp.domain.model.MutualFundValuation
 import com.financialapp.domain.model.calculateInvestmentAmount
@@ -33,10 +34,10 @@ import java.time.LocalDate
 
 interface MutualFundRepository {
     suspend fun createFund(fund: MutualFund): Long
+    suspend fun updateFund(fund: MutualFund): Long
+    suspend fun deleteFund(fundId: Long, deletedAt: Instant): Boolean
     suspend fun getFund(fundId: Long): MutualFund?
-    suspend fun getFunds(): List<MutualFund>
-    suspend fun getInvestmentTransactions(): List<MutualFundTransaction>
-    suspend fun getNavHistory(): List<FundNavEntry>
+    suspend fun getActiveFunds(): List<MutualFund>
     suspend fun recordPurchase(transaction: MutualFundTransaction): Long
     suspend fun recordRedemption(transaction: MutualFundTransaction): Long
     suspend fun getHolding(fundId: Long, investmentAccountId: Long): MutualFundHolding?
@@ -44,13 +45,9 @@ interface MutualFundRepository {
     suspend fun recordNav(fundId: Long, nav: Money, asOfDate: LocalDate, createdAt: Instant, source: String? = null, notes: String? = null): Long
     suspend fun valueAt(fundId: Long, investmentAccountId: Long, asOfDate: LocalDate): MutualFundValuation
     suspend fun calculateReturn(fundId: Long, investmentAccountId: Long, asOfDate: LocalDate): MutualFundReturn
+    suspend fun getAllInvestmentTransactions(): List<MutualFundTransaction>
+    suspend fun getAllNavHistory(): List<MutualFundNavPoint>
 }
-
-data class FundNavEntry(
-    val fundId: Long,
-    val nav: Money,
-    val asOfDate: LocalDate,
-)
 
 class LocalMutualFundRepository(
     private val database: AppDatabase,
@@ -59,21 +56,46 @@ class LocalMutualFundRepository(
     private val transactionDao: TransactionDao,
 ) : MutualFundRepository {
     override suspend fun createFund(fund: MutualFund): Long {
-        InvestmentValidators.validateFund(fund)
+        val normalized = fund.copy(name = fund.name.trim(), code = fund.code.trim().uppercase())
+        InvestmentValidators.validateFund(normalized)
+        require(!mutualFundDao.hasDuplicateNameOrCode(normalized.name, normalized.code, 0L)) {
+            "A mutual fund with the same name or code already exists"
+        }
         val now = System.currentTimeMillis()
-        return mutualFundDao.insertFund(fund.toEntity(now))
+        return mutualFundDao.insertFund(normalized.toEntity(now))
+    }
+
+    override suspend fun updateFund(fund: MutualFund): Long {
+        require(fund.id > 0L) { "Existing mutual fund id is required" }
+        val existing = mutualFundDao.getFund(fund.id) ?: throw IllegalArgumentException("Mutual fund does not exist")
+        require(!existing.isDeleted) { "Deleted mutual funds cannot be updated" }
+        require(!fund.isDeleted) { "Use delete to delete a mutual fund" }
+        if (fund.name.isBlank()) throw IllegalArgumentException("Mutual fund name is required")
+        if (fund.code.isBlank()) throw IllegalArgumentException("Mutual fund code is required")
+        if (fund.currencyCode != "INR") throw IllegalArgumentException("Phase 10 supports INR only")
+        val normalized = fund.copy(name = fund.name.trim(), code = fund.code.trim().uppercase())
+        require(!mutualFundDao.hasDuplicateNameOrCode(normalized.name, normalized.code, normalized.id)) {
+            "A mutual fund with the same name or code already exists"
+        }
+        val now = System.currentTimeMillis()
+        require(
+            mutualFundDao.updateFund(
+                existing.copy(name = normalized.name, code = normalized.code, isActive = normalized.isActive, updatedAtEpochMs = now),
+            ) == 1,
+        ) { "Mutual fund update failed" }
+        return fund.id
+    }
+
+    override suspend fun deleteFund(fundId: Long, deletedAt: Instant): Boolean {
+        require(fundId > 0L) { "Mutual fund is required" }
+        val existing = mutualFundDao.getFund(fundId) ?: throw IllegalArgumentException("Mutual fund does not exist")
+        require(!existing.isDeleted) { "Mutual fund is already deleted" }
+        return mutualFundDao.softDeleteFund(fundId, deletedAt.toEpochMilli()) == 1
     }
 
     override suspend fun getFund(fundId: Long): MutualFund? = mutualFundDao.getFund(fundId)?.takeUnless { it.isDeleted }?.toDomain()
 
-    override suspend fun getFunds(): List<MutualFund> = mutualFundDao.getActiveFunds().map(MutualFundEntity::toDomain)
-
-    override suspend fun getInvestmentTransactions(): List<MutualFundTransaction> =
-        mutualFundDao.getAllTransactionsOrdered().map(MutualFundTransactionEntity::toDomain)
-
-    override suspend fun getNavHistory(): List<FundNavEntry> = mutualFundDao.getNavHistoryOrdered().map {
-        FundNavEntry(it.fundId, Money(it.navMinor, it.currencyCode), LocalDate.ofEpochDay(it.asOfDateEpochDay))
-    }
+    override suspend fun getActiveFunds(): List<MutualFund> = mutualFundDao.getActiveFunds().map { it.toDomain() }
 
     override suspend fun recordPurchase(transaction: MutualFundTransaction): Long = record(transaction, DomainInvestmentTransactionType.PURCHASE)
 
@@ -96,12 +118,11 @@ class LocalMutualFundRepository(
                 require(linkedCash.accountId == transaction.cashAccountId) { "Linked cash transaction account is invalid" }
             }
             InvestmentValidators.validateTransaction(transaction, fund, investmentAccount, cashAccount, linkedCash?.let { Money(it.amountMinor, it.currencyCode) })
+            ensureNavForTransactionDate(fund, transaction.nav, transaction.transactionDate, transaction.createdAt)
             val previous = mutualFundDao.getHolding(transaction.fundId, transaction.investmentAccountId)?.toDomain()
             val now = transaction.createdAt.toEpochMilli()
             val id = mutualFundDao.insertTransaction(transaction.toEntity(now))
-            val allEvents = mutualFundDao.getTransactions(transaction.fundId, transaction.investmentAccountId)
-                .map(MutualFundTransactionEntity::toDomain)
-            val next = holdingAt(allEvents, transaction.fundId, transaction.investmentAccountId, LocalDate.MAX)
+            val next = InvestmentCalculator.reconcileHolding(previous, transaction, transaction.createdAt)
             val nextEntity = next.toEntity(previous?.let { mutualFundDao.getHolding(transaction.fundId, transaction.investmentAccountId) }?.holdingId ?: 0L)
             if (previous == null) mutualFundDao.insertHolding(nextEntity) else mutualFundDao.updateHolding(nextEntity)
             id
@@ -137,6 +158,8 @@ class LocalMutualFundRepository(
         val fund = mutualFundDao.getFund(fundId)?.toDomain() ?: throw IllegalArgumentException("Mutual fund does not exist")
         require(!fund.isDeleted && fund.isActive) { "Inactive or deleted mutual funds cannot receive NAV" }
         require(nav.currencyCode == fund.currencyCode && nav.minorUnits > 0L) { "NAV must be positive and match fund currency" }
+        val updated = mutualFundDao.updateNavForDate(fundId, asOfDate.toEpochDay(), nav.minorUnits, nav.currencyCode, source, notes, createdAt.toEpochMilli())
+        if (updated > 0) return mutualFundDao.getLatestNav(fundId, asOfDate.toEpochDay())?.navId ?: 0L
         return mutualFundDao.insertNav(MutualFundNavEntity(fundId = fundId, asOfDateEpochDay = asOfDate.toEpochDay(), navMinor = nav.minorUnits, currencyCode = nav.currencyCode, source = source, notes = notes, createdAtEpochMs = createdAt.toEpochMilli()))
     }
 
@@ -153,6 +176,41 @@ class LocalMutualFundRepository(
         val events = mutualFundDao.getTransactions(fundId, investmentAccountId).map(MutualFundTransactionEntity::toDomain).filter { !it.transactionDate.isAfter(asOfDate) }
         val valuation = valueAt(fundId, investmentAccountId, asOfDate)
         return calculateMutualFundReturn(events.filter { it.type == DomainInvestmentTransactionType.PURCHASE }, events.filter { it.type == DomainInvestmentTransactionType.REDEMPTION }, valuation.value)
+    }
+
+    override suspend fun getAllInvestmentTransactions(): List<MutualFundTransaction> =
+        mutualFundDao.getAllTransactions().map(MutualFundTransactionEntity::toDomain)
+
+    override suspend fun getAllNavHistory(): List<MutualFundNavPoint> =
+        mutualFundDao.getAllNavHistory().map {
+            MutualFundNavPoint(
+                fundId = it.fundId,
+                asOfDate = LocalDate.ofEpochDay(it.asOfDateEpochDay),
+                nav = Money(it.navMinor, it.currencyCode),
+            )
+        }
+
+    private suspend fun ensureNavForTransactionDate(
+        fund: MutualFund,
+        nav: Money,
+        asOfDate: LocalDate,
+        createdAt: Instant,
+    ) {
+        val epochDay = asOfDate.toEpochDay()
+        val existing = mutualFundDao.getLatestNav(fund.id, epochDay)
+        if (existing != null && existing.asOfDateEpochDay == epochDay) {
+            return
+        }
+        mutualFundDao.insertNav(
+            MutualFundNavEntity(
+                fundId = fund.id,
+                asOfDateEpochDay = epochDay,
+                navMinor = nav.minorUnits,
+                currencyCode = nav.currencyCode,
+                source = "transaction",
+                createdAtEpochMs = createdAt.toEpochMilli(),
+            ),
+        )
     }
 
     private fun holdingAt(events: List<MutualFundTransaction>, fundId: Long, accountId: Long, asOfDate: LocalDate): MutualFundHolding {

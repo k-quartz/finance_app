@@ -41,19 +41,16 @@ object TransactionAnalytics {
         val ranges = mutableListOf<Pair<LocalDate, LocalDate>>()
         var current = when (period.granularity) {
             ReportingGranularity.MONTH -> period.startDate.withDayOfMonth(1)
-            ReportingGranularity.QUARTER -> period.startDate.withDayOfMonth(1).minusMonths((period.startDate.monthValue - 1) % 3L)
             ReportingGranularity.YEAR -> period.startDate.withDayOfYear(1)
         }
         while (!current.isAfter(period.endDate)) {
             val end = when (period.granularity) {
                 ReportingGranularity.MONTH -> current.withDayOfMonth(current.lengthOfMonth())
-                ReportingGranularity.QUARTER -> current.plusMonths(2).withDayOfMonth(current.plusMonths(2).lengthOfMonth())
                 ReportingGranularity.YEAR -> current.withDayOfYear(current.lengthOfYear())
             }
             ranges += maxOf(current, period.startDate) to minOf(end, period.endDate)
             current = when (period.granularity) {
                 ReportingGranularity.MONTH -> current.plusMonths(1)
-                ReportingGranularity.QUARTER -> current.plusMonths(3)
                 ReportingGranularity.YEAR -> current.plusYears(1)
             }
         }
@@ -65,10 +62,6 @@ object TransactionAnalytics {
             period.startDate.withDayOfMonth(1),
             YearMonth.from(date).atDay(1),
         ).toInt()
-        ReportingGranularity.QUARTER -> ChronoUnit.MONTHS.between(
-            period.startDate.withDayOfMonth(1).minusMonths((period.startDate.monthValue - 1) % 3L),
-            YearMonth.from(date).atDay(1),
-        ).toInt() / 3
         ReportingGranularity.YEAR -> date.year - period.startDate.year
     }
 

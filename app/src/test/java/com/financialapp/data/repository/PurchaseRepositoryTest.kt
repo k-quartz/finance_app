@@ -34,7 +34,10 @@ class PurchaseRepositoryTest {
             .allowMainThreadQueries()
             .build()
         productRepository = LocalProductRepository(database.productDao(), database.categoryDao())
-        purchaseRepository = LocalPurchaseRepository(database.purchaseDao(), database.productDao(), database.categoryDao(), database.transactionDao())
+        purchaseRepository = LocalPurchaseRepository(
+            database,
+            LocalFinancialRepository(database.accountDao(), database.categoryDao(), database.transactionDao()),
+        )
     }
 
     @After
@@ -74,6 +77,41 @@ class PurchaseRepositoryTest {
         assertThrows(IllegalArgumentException::class.java) {
             runBlocking { purchaseRepository.create(purchase(productId, Quantity(1, 0, "l"), Money(100, "INR"), null, LocalDate.of(2026, 1, 1))) }
         }
+    }
+
+    @Test
+    fun `recordWithExpense creates a transaction visible in date-range and dashboard queries`() = runBlocking {
+        val accountId = database.accountDao().upsert(
+            com.financialapp.data.local.entity.AccountEntity(
+                name = "Bank",
+                accountType = com.financialapp.data.local.entity.AccountType.BANK,
+                currencyCode = "INR",
+                openingBalanceMinor = 100_000L,
+                createdAtEpochMs = 1L,
+                updatedAtEpochMs = 1L,
+            ),
+        )
+        val categoryId = database.categoryDao().upsert(
+            com.financialapp.data.local.entity.CategoryEntity(
+                categoryType = com.financialapp.data.local.entity.CategoryType.EXPENSE,
+                name = "Groceries",
+                createdAtEpochMs = 1L,
+                updatedAtEpochMs = 1L,
+            ),
+        )
+        val productId = productRepository.create(Product(name = "Rice", defaultUnit = "kg", categoryId = categoryId))
+        val purchase = purchase(productId, Quantity(2000, 3, "kg"), Money(600, "INR"), categoryId, LocalDate.of(2026, 1, 1))
+
+        purchaseRepository.recordWithExpense(accountId, purchase)
+
+        val transactionDao = database.transactionDao()
+        val transactionsInRange = transactionDao.getTransactionsForDateRange(
+            LocalDate.of(2026, 1, 1).toEpochDay(),
+            LocalDate.of(2026, 1, 1).toEpochDay(),
+        )
+        assertEquals(1, transactionsInRange.size)
+        assertEquals(accountId, transactionsInRange.single().accountId)
+        assertEquals(1_200L, transactionsInRange.single().amountMinor)
     }
 
     @Test

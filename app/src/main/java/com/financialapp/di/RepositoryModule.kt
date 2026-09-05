@@ -1,6 +1,5 @@
 package com.financialapp.di
 
-import android.content.Context
 import com.financialapp.data.local.database.AppDatabase
 import com.financialapp.data.repository.AccountRepository
 import com.financialapp.data.repository.BackupRepository
@@ -20,9 +19,6 @@ import com.financialapp.data.repository.ProductRepository
 import com.financialapp.data.repository.PurchaseRepository
 import com.financialapp.data.repository.LocalMutualFundRepository
 import com.financialapp.data.repository.MutualFundRepository
-import com.financialapp.security.AesGcmBackupCipher
-import com.financialapp.security.AndroidSecurePreferences
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.Clock
 import dagger.Module
 import dagger.Provides
@@ -56,8 +52,8 @@ object RepositoryModule {
 
     @Provides
     @Singleton
-    fun providePurchaseRepository(database: AppDatabase): PurchaseRepository =
-        LocalPurchaseRepository(database.purchaseDao(), database.productDao(), database.categoryDao(), database.transactionDao())
+    fun providePurchaseRepository(database: AppDatabase, financialRepository: FinancialRepository): PurchaseRepository =
+        LocalPurchaseRepository(database, financialRepository)
 
     @Provides
     @Singleton
@@ -88,11 +84,7 @@ object RepositoryModule {
 
     @Provides
     @Singleton
-    fun provideBackupRepository(
-        database: AppDatabase,
-        @ApplicationContext context: Context,
-        clock: Clock,
-    ): BackupRepository =
+    fun provideBackupRepository(database: AppDatabase, clock: Clock): BackupRepository =
         LocalBackupRepository(
             database = database,
             accountDao = database.accountDao(),
@@ -103,6 +95,5 @@ object RepositoryModule {
             purchaseDao = database.purchaseDao(),
             mutualFundDao = database.mutualFundDao(),
             clock = clock,
-            backupCipher = AesGcmBackupCipher(AndroidSecurePreferences(context)),
         )
 }

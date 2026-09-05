@@ -41,6 +41,9 @@ interface FinancialRepository {
     suspend fun detectRecurringExpenses(startDate: LocalDate, endDate: LocalDate, accountId: Long? = null): List<RecurringExpensePattern>
     suspend fun findPotentialDuplicates(transaction: FinancialTransaction): List<DuplicateTransaction>
     suspend fun correctTransaction(originalTransactionId: Long, replacement: FinancialTransaction): Long
+    suspend fun deleteTransaction(transactionId: Long, deletedAt: Instant): Boolean
+    suspend fun updateAccount(account: Account): Long
+    suspend fun deleteAccount(accountId: Long, deletedAt: Instant): Boolean
 }
 
 class LocalFinancialRepository(
@@ -240,6 +243,44 @@ class LocalFinancialRepository(
         FinancialValidators.validateTransaction(replacement, category, ancestors)
         require(replacement.amount.currencyCode == account.currencyCode) { "Transaction currency must match account currency" }
         return transactionDao.correctTransaction(originalTransactionId, replacement.toEntity(), replacement.createdAt.toEpochMilli())
+    }
+
+    override suspend fun deleteTransaction(transactionId: Long, deletedAt: Instant): Boolean {
+        require(transactionId > 0) { "Transaction is required" }
+        val existing = transactionDao.getById(transactionId) ?: throw IllegalArgumentException("Transaction does not exist")
+        require(!existing.isDeleted) { "Transaction is already deleted" }
+        val deletedAtMs = deletedAt.toEpochMilli()
+        return transactionDao.softDelete(transactionId, deletedAtMs, deletedAtMs) == 1
+    }
+
+    override suspend fun updateAccount(account: Account): Long {
+        require(account.id > 0L) { "Existing account id is required" }
+        val existing = accountDao.getById(account.id) ?: throw IllegalArgumentException("Account does not exist")
+        require(!existing.isDeleted) { "Deleted accounts cannot be updated" }
+        require(!account.isDeleted) { "Use delete to delete an account" }
+        FinancialValidators.validateAccount(account)
+        return accountDao.upsert(
+            AccountEntity(
+                accountId = account.id,
+                accountType = AccountType.valueOf(account.type.name),
+                name = account.name,
+                currencyCode = account.openingBalance.currencyCode,
+                openingBalanceMinor = account.openingBalance.minorUnits,
+                isActive = account.isActive,
+                isDeleted = existing.isDeleted,
+                createdAtEpochMs = existing.createdAtEpochMs,
+                updatedAtEpochMs = account.updatedAt.toEpochMilli(),
+                notes = existing.notes,
+            ),
+        )
+    }
+
+    override suspend fun deleteAccount(accountId: Long, deletedAt: Instant): Boolean {
+        require(accountId > 0) { "Account is required" }
+        val existing = accountDao.getById(accountId) ?: throw IllegalArgumentException("Account does not exist")
+        require(!existing.isDeleted) { "Account is already deleted" }
+        val deletedAtMs = deletedAt.toEpochMilli()
+        return accountDao.softDelete(accountId, deletedAtMs, deletedAtMs) == 1
     }
 
     private suspend fun categoryAncestors(parentId: Long?): List<Category> {

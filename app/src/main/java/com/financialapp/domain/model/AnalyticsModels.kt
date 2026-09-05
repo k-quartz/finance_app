@@ -3,7 +3,7 @@ package com.financialapp.domain.model
 import java.time.LocalDate
 import java.time.YearMonth
 
-enum class ReportingGranularity { MONTH, QUARTER, YEAR }
+enum class ReportingGranularity { MONTH, YEAR }
 
 data class ReportingPeriod(
     val startDate: LocalDate,
@@ -20,13 +20,6 @@ data class ReportingPeriod(
             month.atEndOfMonth(),
             ReportingGranularity.MONTH,
         )
-
-        fun quarter(year: Int, quarter: Int): ReportingPeriod {
-            require(quarter in 1..4) { "Quarter must be between 1 and 4" }
-            val startMonth = (quarter - 1) * 3 + 1
-            val start = LocalDate.of(year, startMonth, 1)
-            return ReportingPeriod(start, start.plusMonths(2).withDayOfMonth(start.plusMonths(2).lengthOfMonth()), ReportingGranularity.QUARTER)
-        }
 
         fun year(year: Int): ReportingPeriod = ReportingPeriod(
             LocalDate.of(year, 1, 1),

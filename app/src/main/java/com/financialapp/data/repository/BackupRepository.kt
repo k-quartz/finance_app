@@ -19,7 +19,6 @@ import com.financialapp.data.local.entity.ProductEntity
 import com.financialapp.data.local.entity.ProductPriceHistoryEntity
 import com.financialapp.data.local.entity.PurchaseEntity
 import com.financialapp.data.local.entity.TransactionEntity
-import com.financialapp.security.BackupCipher
 import java.time.Clock
 import org.json.JSONArray
 import org.json.JSONObject
@@ -39,39 +38,30 @@ class LocalBackupRepository(
     private val purchaseDao: PurchaseDao,
     private val mutualFundDao: MutualFundDao,
     private val clock: Clock,
-    private val backupCipher: BackupCipher,
 ) : BackupRepository {
     override suspend fun exportBackup(): String {
-        return database.withTransaction {
-            val snapshot = JSONObject()
-                .put("formatVersion", BACKUP_FORMAT_VERSION)
-                .put("databaseVersion", BACKUP_DATABASE_VERSION)
-                .put("exportedAtEpochMs", clock.instant().toEpochMilli())
-                .put("accounts", accountDao.getAll().toJsonArray { account: AccountEntity -> account.toJson() })
-                .put("categories", categoryDao.getAll().toJsonArray { category: CategoryEntity -> category.toJson() })
-                .put("transactions", transactionDao.getAll().toJsonArray { transaction: TransactionEntity -> transaction.toJson() })
-                .put("products", productDao.getAll().toJsonArray { product: ProductEntity -> product.toJson() })
-                .put("priceHistory", productPriceHistoryDao.getAll().toJsonArray { history: ProductPriceHistoryEntity -> history.toJson() })
-                .put("purchases", purchaseDao.getAll().toJsonArray { purchase: PurchaseEntity -> purchase.toJson() })
-                .put("mutualFunds", mutualFundDao.getAllFunds().toJsonArray { fund: MutualFundEntity -> fund.toJson() })
-                .put("mutualFundHoldings", mutualFundDao.getAllHoldingsList().toJsonArray { holding: MutualFundHoldingEntity -> holding.toJson() })
-                .put("mutualFundTransactions", mutualFundDao.getAllTransactions().toJsonArray { transaction: MutualFundTransactionEntity -> transaction.toJson() })
-                .put("mutualFundNavHistory", mutualFundDao.getAllNavHistory().toJsonArray { nav: MutualFundNavEntity -> nav.toJson() })
-            backupCipher.encrypt(snapshot.toString(2))
-            }
+        val snapshot = JSONObject()
+            .put("formatVersion", BACKUP_FORMAT_VERSION)
+            .put("databaseVersion", BACKUP_DATABASE_VERSION)
+            .put("exportedAtEpochMs", clock.instant().toEpochMilli())
+            .put("accounts", accountDao.getAll().toJsonArray { account: AccountEntity -> account.toJson() })
+            .put("categories", categoryDao.getAll().toJsonArray { category: CategoryEntity -> category.toJson() })
+            .put("transactions", transactionDao.getAll().toJsonArray { transaction: TransactionEntity -> transaction.toJson() })
+            .put("products", productDao.getAll().toJsonArray { product: ProductEntity -> product.toJson() })
+            .put("priceHistory", productPriceHistoryDao.getAll().toJsonArray { history: ProductPriceHistoryEntity -> history.toJson() })
+            .put("purchases", purchaseDao.getAll().toJsonArray { purchase: PurchaseEntity -> purchase.toJson() })
+            .put("mutualFunds", mutualFundDao.getAllFunds().toJsonArray { fund: MutualFundEntity -> fund.toJson() })
+            .put("mutualFundHoldings", mutualFundDao.getAllHoldingsList().toJsonArray { holding: MutualFundHoldingEntity -> holding.toJson() })
+            .put("mutualFundTransactions", mutualFundDao.getAllTransactions().toJsonArray { transaction: MutualFundTransactionEntity -> transaction.toJson() })
+            .put("mutualFundNavHistory", mutualFundDao.getAllNavHistory().toJsonArray { nav: MutualFundNavEntity -> nav.toJson() })
+        return snapshot.toString(2)
     }
 
     override suspend fun restoreBackup(json: String) {
         require(json.isNotBlank()) { "Backup data is required" }
-        val plaintext = try {
-            backupCipher.decrypt(json)
-        } catch (exception: IllegalArgumentException) {
-            json
-        }
-        val snapshot = parseSnapshot(plaintext)
+        val snapshot = parseSnapshot(json)
         require(snapshot.formatVersion == BACKUP_FORMAT_VERSION) { "Unsupported backup format version" }
         require(snapshot.databaseVersion == BACKUP_DATABASE_VERSION) { "Backup database version does not match the current schema" }
-        validateUniqueIds(snapshot)
         try {
             database.withTransaction {
                 clearTables()
@@ -128,23 +118,6 @@ class LocalBackupRepository(
         }
     }
 
-    private fun validateUniqueIds(snapshot: BackupSnapshot) {
-        requireDistinctIds("accounts", snapshot.accounts.map { it.accountId })
-        requireDistinctIds("categories", snapshot.categories.map { it.categoryId })
-        requireDistinctIds("transactions", snapshot.transactions.map { it.transactionId })
-        requireDistinctIds("products", snapshot.products.map { it.productId })
-        requireDistinctIds("priceHistory", snapshot.priceHistory.map { it.priceHistoryId })
-        requireDistinctIds("purchases", snapshot.purchases.map { it.purchaseId })
-        requireDistinctIds("mutualFunds", snapshot.mutualFunds.map { it.fundId })
-        requireDistinctIds("mutualFundHoldings", snapshot.mutualFundHoldings.map { it.holdingId })
-        requireDistinctIds("mutualFundTransactions", snapshot.mutualFundTransactions.map { it.investmentTransactionId })
-        requireDistinctIds("mutualFundNavHistory", snapshot.mutualFundNavHistory.map { it.navId })
-    }
-
-    private fun requireDistinctIds(collectionName: String, ids: List<Long>) {
-        require(ids.size == ids.toSet().size) { "Backup contains duplicate $collectionName IDs" }
-    }
-
     private data class BackupSnapshot(
         val formatVersion: Int,
         val databaseVersion: Int,
@@ -163,7 +136,7 @@ class LocalBackupRepository(
 }
 
 private const val BACKUP_FORMAT_VERSION = 1
-private const val BACKUP_DATABASE_VERSION = 9
+private const val BACKUP_DATABASE_VERSION = 8
 
 private fun <T> List<T>.toJsonArray(mapper: (T) -> JSONObject): JSONArray = JSONArray().apply {
     forEach { put(mapper(it)) }

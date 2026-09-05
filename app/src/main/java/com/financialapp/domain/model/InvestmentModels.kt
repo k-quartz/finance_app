@@ -5,6 +5,12 @@ import java.math.RoundingMode
 import java.time.Instant
 import java.time.LocalDate
 
+data class MutualFundNavPoint(
+    val fundId: Long,
+    val asOfDate: LocalDate,
+    val nav: Money,
+)
+
 data class MutualFund(
     val id: Long = 0L,
     val name: String,

@@ -53,7 +53,7 @@ Topics:
 
 - relationships across accounts, transactions, and categories
 - soft-delete behavior
-- query correctness for monthly, quarterly, and yearly analytics
+- query correctness for monthly and yearly analytics
 - handling historical data after category archiving
 - data consistency across duplicate or corrected transactions
 
@@ -161,7 +161,7 @@ Examples:
 - database query performance for dashboards
 - memory efficiency in analytics pipelines
 
-These tests should track stable baseline behavior and help detect slowdowns before release. Phase 15 adds a 50,000-transaction analytics guardrail, Room `EXPLAIN QUERY PLAN` checks for date/filter indexes, and Gradle output reporting through the `PERFORMANCE_BASELINE.md` baseline contract.
+These tests should track stable baseline behavior and help detect slowdowns before release.
 
 ## 3. Financial correctness test examples
 
@@ -206,9 +206,3 @@ Phase 8 adds deterministic monthly/yearly analytics coverage for inclusive month
 Phase 9 adds deterministic recurring-expense coverage for normalized merchants, weekly cadence, month-end billing across short months, account/date filtering, transfer and income exclusion, irregular intervals, amount outliers, invalid ranges, and confidence thresholds.
 
 Phase 10 adds deterministic investment coverage for scaled unit reconciliation, exact NAV multiplication and rounding, partial redemption, oversell rejection, linked cash direction, historical NAV lookup, valuation, return percentages, and the version 7-to-8 schema contract. UI, performance-baseline, and import/export suites remain scheduled for their respective future phases.
-
-Phase 16 adds production-readiness regression coverage for complete backup round trips, malformed and duplicate-key backup rejection, atomic restore rollback, encrypted backup payloads, and rejection of backdated investment oversells. The release gate also verifies the complete migration chain, exported Room schema, unit tests, lint, debug assembly, and focused debug unit tests.
-
-Phase 17 adds instrumentation navigation regressions verifying that Dashboard reaches Manage, that account/category lifecycle, transaction correction, purchase, investment/NAV, product-price history, and recurring-analysis sections are user-accessible, and that Android back navigation returns from Manage to Dashboard. The ViewModel preserves loaded records across loading, success, and error transitions; direct ViewModel state-transition tests and realistic end-to-end financial workflow tests remain Phase 18 coverage.
-
-Phase 18 adds a realistic repository integration scenario covering account balance reconciliation, transfers, correction history, refunds, category deletion, purchase totals, historical prices, mutual-fund valuation and returns, monthly/quarterly analytics, recurring negative cases, dashboard reconciliation, and complete backup restoration. Quarterly boundary behavior is covered by deterministic unit tests, and Manage exposes monthly, quarterly, and yearly analysis choices.

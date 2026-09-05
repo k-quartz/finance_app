@@ -34,7 +34,7 @@ Non-negotiable principles:
 - Every schema change requires migration tests.
 - Exported Room schemas are part of the database contract.
 
-The current Room database is version 9. Phase 6 required no schema change because the transactions table already contains explicit epoch-day dates, transfer identity, restrictive account/category foreign keys, and soft-delete columns. Correction workflows preserve the original row and insert a replacement in one database transaction; active reads exclude the soft-deleted original. Version 9 adds composite indexes for active date-range scans and latest NAV selection; the 8-to-9 migration is additive and preserves all rows.
+The current Room database is version 8. Phase 6 required no schema change because the transactions table already contains explicit epoch-day dates, transfer identity, restrictive account/category foreign keys, and soft-delete columns. Correction workflows preserve the original row and insert a replacement in one database transaction; active reads exclude the soft-deleted original.
 
 ---
 
@@ -60,8 +60,6 @@ Phase 8 analytics requires no schema migration. It reads the existing transactio
 
 Phase 9 recurring expense detection requires no schema migration. It uses the existing transaction date, account, type, amount, category, merchant, and soft-delete fields through the repository date-range queries. Detected patterns are derived analysis results and are not persisted, so historical transaction data remains unchanged.
 
-Phase 18 quarterly analytics also requires no schema migration. Quarter buckets are derived from the existing transaction epoch-day and use the same exact minor-unit aggregation and transfer-exclusion rules as monthly and yearly analytics.
-
 ### 2.3 Mutual funds and investment precision
 
 Version 8 adds `mutual_funds`, `mutual_fund_holdings`, `mutual_fund_transactions`, and `mutual_fund_nav_history`. Fund codes and `(fund_id, as_of_date_epoch_day)` NAV entries are unique. Holdings are unique per fund and investment account and reference both the fund and investment account restrictively. Investment events are insert-only and reference the fund, investment account, optional cash account, and optional linked cash transaction restrictively; the linked cash reference is set null if its transaction is removed. NAV entries are dated INR minor-unit values and are insert-only to prevent silent historical replacement.
@@ -73,7 +71,3 @@ Unit values use positive scaled integers. Purchases and redemptions store units,
 The existing `product_price_history` table stores historical product and commodity price points as insert-only records. Each row is tied to a product with a restrictive foreign key, uses an explicit `as_of_date_epoch_day`, and stores the price in INR minor units. The unique `(product_id, as_of_date_epoch_day)` index prevents duplicate price points for the same product and date.
 
 Active reads exclude deleted history rows. Repository lookups return exact-date matches or the latest available price before or on a requested date, and trend analysis operates over stored points without rewriting history. Cross-product comparisons use the latest available point on or before a requested date.
-
-### 2.5 Performance indexes
-
-Transaction date-range reads use `(account_id, is_deleted, occurred_date_epoch_day)` for account-filtered analytics and `(is_deleted, occurred_date_epoch_day)` for all-account analytics. Price-history reads use `(product_id, is_deleted, as_of_date_epoch_day)` and `(is_deleted, as_of_date_epoch_day)`. Portfolio latest-NAV aggregation uses `(as_of_date_epoch_day, fund_id)`. These indexes are created by `MIGRATION_8_9` and are represented in the exported Room schema.

@@ -29,6 +29,7 @@ import com.financialapp.domain.model.Category
 import com.financialapp.domain.model.CommodityPricePoint
 import com.financialapp.domain.model.FinancialTransaction
 import com.financialapp.domain.model.MutualFund
+import com.financialapp.domain.model.MutualFundNavPoint
 import com.financialapp.domain.model.MutualFundTransaction
 import com.financialapp.domain.model.Product
 import com.financialapp.domain.model.Purchase
@@ -103,7 +104,7 @@ fun WorkflowsRoute(viewModel: WorkflowsViewModel = hiltViewModel()) {
         }
 }
 
-@Composable private fun InvestmentPanel(vm: WorkflowsViewModel, funds: List<MutualFund>, transactions: List<MutualFundTransaction>, navs: List<com.financialapp.data.repository.FundNavEntry>) {
+@Composable private fun InvestmentPanel(vm: WorkflowsViewModel, funds: List<MutualFund>, transactions: List<MutualFundTransaction>, navs: List<MutualFundNavPoint>) {
         Form("New mutual fund", listOf("Fund name", "Fund code"), listOf("name", "code")) { v -> vm.createFund(v[0], v[1]) }
         Form("Investment purchase or redemption", listOf("Fund id", "Investment account id", "Type: PURCHASE", "Units", "NAV", "Total amount", "Date: 2026-08-22"), listOf("fund", "account", "type", "units", "nav", "total", "date")) { v -> vm.recordInvestment(v[0], v[1], v[2], v[3], v[4], v[5], v[6]) }
         Form("NAV history", listOf("Fund id", "NAV", "Date: 2026-08-22"), listOf("fund", "nav", "date")) { v -> vm.recordNav(v[0], v[1], v[2]) }

@@ -32,7 +32,6 @@ import androidx.room.PrimaryKey
         Index(value = ["account_id", "occurred_date_epoch_day"]),
         Index(value = ["account_id", "is_deleted", "occurred_date_epoch_day"]),
         Index(value = ["category_id", "occurred_date_epoch_day"]),
-        Index(value = ["is_deleted", "occurred_date_epoch_day"]),
         Index(value = ["account_id", "transaction_type"]),
         Index(value = ["counterparty_account_id"]),
         Index(value = ["transfer_id"], unique = true),

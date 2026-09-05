@@ -55,7 +55,7 @@ class Phase18EndToEndTest {
         financial = LocalFinancialRepository(database.accountDao(), database.categoryDao(), database.transactionDao())
         categories = LocalCategoryRepository(database)
         products = LocalProductRepository(database.productDao(), database.categoryDao())
-        purchases = LocalPurchaseRepository(database.purchaseDao(), database.productDao(), database.categoryDao(), database.transactionDao())
+        purchases = LocalPurchaseRepository(database, financial)
         prices = LocalProductPriceHistoryRepository(database.productDao(), database.productPriceHistoryDao())
         funds = LocalMutualFundRepository(database, database.mutualFundDao(), database.accountDao(), database.transactionDao())
         dashboard = LocalDashboardRepository(financial, categories, funds, products, prices)
@@ -115,8 +115,14 @@ class Phase18EndToEndTest {
 
         val report = financial.analyze(com.financialapp.domain.model.ReportingPeriod(january, february, com.financialapp.domain.model.ReportingGranularity.MONTH))
         assertEquals(listOf(200_000L, 5_000L), report.buckets.map { it.income.minorUnits })
-        val quarter = financial.analyze(com.financialapp.domain.model.ReportingPeriod(january, LocalDate.of(2026, 3, 31), com.financialapp.domain.model.ReportingGranularity.QUARTER))
-        assertEquals(205_000L, quarter.buckets.single().income.minorUnits)
+        val firstQuarterMonths = financial.analyze(
+            com.financialapp.domain.model.ReportingPeriod(
+                january,
+                LocalDate.of(2026, 3, 31),
+                com.financialapp.domain.model.ReportingGranularity.MONTH,
+            ),
+        )
+        assertEquals(205_000L, firstQuarterMonths.buckets.sumOf { it.income.minorUnits })
         assertTrue(financial.detectRecurringExpenses(january, february).isEmpty())
 
         val summary = dashboard.loadDashboard(DashboardPeriod.MONTH, february)
@@ -141,7 +147,7 @@ class Phase18EndToEndTest {
     private fun buildBackupRepository(database: AppDatabase) = LocalBackupRepository(
         database, database.accountDao(), database.categoryDao(), database.transactionDao(), database.productDao(),
         database.productPriceHistoryDao(), database.purchaseDao(), database.mutualFundDao(),
-        Clock.fixed(now, ZoneOffset.UTC), com.financialapp.security.PlaintextBackupCipher(),
+        Clock.fixed(now, ZoneOffset.UTC),
     )
 
     private fun account(name: String, type: AccountType, opening: Long = 0L) = Account(

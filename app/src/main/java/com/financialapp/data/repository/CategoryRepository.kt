@@ -5,6 +5,7 @@ import com.financialapp.data.local.database.AppDatabase
 import com.financialapp.data.local.entity.CategoryEntity
 import com.financialapp.domain.model.Category
 import com.financialapp.domain.model.CategoryTreeNode
+import com.financialapp.domain.model.toTitleCase
 import com.financialapp.domain.validation.FinancialValidators
 import java.time.Instant
 
@@ -27,32 +28,34 @@ class LocalCategoryRepository(
     override suspend fun create(category: Category): Long {
         require(category.id == 0L) { "New category must not have an id" }
         require(!category.isDeleted) { "New category cannot be deleted" }
+        val titleCased = category.copy(name = category.name.toTitleCase())
         return database.withTransaction {
-            val ancestors = ancestorsOf(category.parentId)
-            FinancialValidators.validateCategory(category, ancestors.firstOrNull(), ancestors.drop(1))
+            val ancestors = ancestorsOf(titleCased.parentId)
+            FinancialValidators.validateCategory(titleCased, ancestors.firstOrNull(), ancestors.drop(1))
             val timestamp = now()
-            categoryDao.insertIfUnique(category.toEntity(timestamp, timestamp))
+            categoryDao.insertIfUnique(titleCased.toEntity(timestamp, timestamp))
         }
     }
 
     override suspend fun update(category: Category): Long {
         require(category.id > 0L) { "Existing category id is required" }
+        val titleCased = category.copy(name = category.name.toTitleCase())
         return database.withTransaction {
-            val existing = categoryDao.getById(category.id) ?: throw IllegalArgumentException("Category does not exist")
+            val existing = categoryDao.getById(titleCased.id) ?: throw IllegalArgumentException("Category does not exist")
             require(!existing.isDeleted) { "Deleted categories cannot be updated" }
-            require(!category.isDeleted) { "Use delete to delete a category" }
-            if (existing.categoryType.name != category.type.name) {
-                require(categoryDao.countChildren(category.id) == 0) {
+            require(!titleCased.isDeleted) { "Use delete to delete a category" }
+            if (existing.categoryType.name != titleCased.type.name) {
+                require(categoryDao.countChildren(titleCased.id) == 0) {
                     "Category type cannot change while it has children"
                 }
             }
-            val ancestors = ancestorsOf(category.parentId)
-            FinancialValidators.validateCategory(category, ancestors.firstOrNull(), ancestors.drop(1))
-            require(!categoryDao.hasDuplicate(category.parentId, category.name, category.type.name, category.id)) {
+            val ancestors = ancestorsOf(titleCased.parentId)
+            FinancialValidators.validateCategory(titleCased, ancestors.firstOrNull(), ancestors.drop(1))
+            require(!categoryDao.hasDuplicate(titleCased.parentId, titleCased.name, titleCased.type.name, titleCased.id)) {
                 "A category with the same name and type already exists at this level"
             }
-            require(categoryDao.update(category.toEntity(existing.createdAtEpochMs, now())) == 1) { "Category update failed" }
-            category.id
+            require(categoryDao.update(titleCased.toEntity(existing.createdAtEpochMs, now())) == 1) { "Category update failed" }
+            titleCased.id
         }
     }
 

@@ -58,17 +58,12 @@ class LocalProductPriceHistoryRepository(
     override suspend fun compareLatestPrices(productIds: List<Long>, asOfDate: LocalDate): List<CommodityPriceComparison> {
         require(productIds.isNotEmpty()) { "At least one product is required" }
         val uniqueProductIds = productIds.distinct()
-        val products = productDao.getByIds(uniqueProductIds).associateBy { it.productId }
-        require(products.size == uniqueProductIds.size) { "Product does not exist" }
-        products.values.forEach { product ->
+        val productNames = uniqueProductIds.associateWith { productId ->
+            val product = productDao.getById(productId)?.toDomain() ?: throw IllegalArgumentException("Product does not exist")
             require(product.isActive && !product.isDeleted) { "Inactive or deleted products cannot be compared" }
+            product.name
         }
-        val productNames = products.mapValues { (_, product) -> product.name }
-        val histories = priceHistoryDao.getHistoryForProducts(uniqueProductIds)
-            .map(ProductPriceHistoryEntity::toDomain)
-            .groupBy { it.productId }
-            .withDefault { emptyList() }
-            .mapValues { (_, history) -> history }
+        val histories = uniqueProductIds.associateWith { productId -> getHistoryForProduct(productId) }
         return CommodityPriceAnalytics.compareLatestPrices(productNames, histories, asOfDate)
     }
 }

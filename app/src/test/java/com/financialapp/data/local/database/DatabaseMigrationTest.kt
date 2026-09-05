@@ -68,32 +68,6 @@ class DatabaseMigrationTest {
     }
 
     @Test
-    fun `v8 to v9 migration creates performance indexes`() {
-        val database = Room.inMemoryDatabaseBuilder(
-            ApplicationProvider.getApplicationContext(),
-            AppDatabase::class.java,
-        ).allowMainThreadQueries().build()
-        try {
-            val sqlite = database.openHelper.writableDatabase
-            sqlite.execSQL("DROP INDEX index_transactions_account_id_is_deleted_occurred_date_epoch_day")
-            sqlite.execSQL("DROP INDEX index_transactions_is_deleted_occurred_date_epoch_day")
-            sqlite.execSQL("DROP INDEX index_product_price_history_product_id_is_deleted_as_of_date_epoch_day")
-            sqlite.execSQL("DROP INDEX index_product_price_history_is_deleted_as_of_date_epoch_day")
-            sqlite.execSQL("DROP INDEX index_mutual_fund_nav_history_as_of_date_epoch_day_fund_id")
-
-            FinancialDatabaseMigrations.MIGRATION_8_9.migrate(sqlite)
-
-            assertIndex(database, "transactions", "index_transactions_account_id_is_deleted_occurred_date_epoch_day", false, listOf("account_id", "is_deleted", "occurred_date_epoch_day"))
-            assertIndex(database, "transactions", "index_transactions_is_deleted_occurred_date_epoch_day", false, listOf("is_deleted", "occurred_date_epoch_day"))
-            assertIndex(database, "product_price_history", "index_product_price_history_product_id_is_deleted_as_of_date_epoch_day", false, listOf("product_id", "is_deleted", "as_of_date_epoch_day"))
-            assertIndex(database, "product_price_history", "index_product_price_history_is_deleted_as_of_date_epoch_day", false, listOf("is_deleted", "as_of_date_epoch_day"))
-            assertIndex(database, "mutual_fund_nav_history", "index_mutual_fund_nav_history_as_of_date_epoch_day_fund_id", false, listOf("as_of_date_epoch_day", "fund_id"))
-        } finally {
-            database.close()
-        }
-    }
-
-    @Test
     fun `migration from v1 preserves financial data and adds new required columns`() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val databaseName = "legacy_financial_app_v1.db"
@@ -236,7 +210,6 @@ class DatabaseMigrationTest {
                 FinancialDatabaseMigrations.MIGRATION_5_6,
                 FinancialDatabaseMigrations.MIGRATION_6_7,
                 FinancialDatabaseMigrations.MIGRATION_7_8,
-                FinancialDatabaseMigrations.MIGRATION_8_9,
             )
             .build()
 

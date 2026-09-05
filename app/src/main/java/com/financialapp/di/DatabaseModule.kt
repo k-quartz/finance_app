@@ -27,7 +27,6 @@ object DatabaseModule {
                 FinancialDatabaseMigrations.MIGRATION_5_6,
                 FinancialDatabaseMigrations.MIGRATION_6_7,
                 FinancialDatabaseMigrations.MIGRATION_7_8,
-                FinancialDatabaseMigrations.MIGRATION_8_9,
             )
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onCreate(database: androidx.sqlite.db.SupportSQLiteDatabase) {

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 8,
-    "identityHash": "a50b7617905b1c5b1367d96a2b1d3239",
+    "identityHash": "ce9373d792f2cec3f3ef8e7518c12232",
     "entities": [
       {
         "tableName": "accounts",
@@ -340,6 +340,17 @@
             ],
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_transactions_account_id_occurred_date_epoch_day` ON `${TABLE_NAME}` (`account_id`, `occurred_date_epoch_day`)"
+          },
+          {
+            "name": "index_transactions_account_id_is_deleted_occurred_date_epoch_day",
+            "unique": false,
+            "columnNames": [
+              "account_id",
+              "is_deleted",
+              "occurred_date_epoch_day"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_transactions_account_id_is_deleted_occurred_date_epoch_day` ON `${TABLE_NAME}` (`account_id`, `is_deleted`, `occurred_date_epoch_day`)"
           },
           {
             "name": "index_transactions_category_id_occurred_date_epoch_day",
@@ -807,6 +818,17 @@
             ],
             "orders": [],
             "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_product_price_history_product_id_as_of_date_epoch_day` ON `${TABLE_NAME}` (`product_id`, `as_of_date_epoch_day`)"
+          },
+          {
+            "name": "index_product_price_history_product_id_is_deleted_as_of_date_epoch_day",
+            "unique": false,
+            "columnNames": [
+              "product_id",
+              "is_deleted",
+              "as_of_date_epoch_day"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_product_price_history_product_id_is_deleted_as_of_date_epoch_day` ON `${TABLE_NAME}` (`product_id`, `is_deleted`, `as_of_date_epoch_day`)"
           },
           {
             "name": "index_product_price_history_product_id_as_of_date_epoch_day_currency_code",
@@ -1289,7 +1311,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a50b7617905b1c5b1367d96a2b1d3239')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ce9373d792f2cec3f3ef8e7518c12232')"
     ]
   }
 }

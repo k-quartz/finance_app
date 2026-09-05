@@ -17,7 +17,7 @@ interface CategoryDao {
     @Insert(onConflict = androidx.room.OnConflictStrategy.ABORT)
     suspend fun insert(category: CategoryEntity): Long
 
-    @Query("SELECT EXISTS(SELECT 1 FROM categories WHERE ((parent_category_id IS NULL AND :parentCategoryId IS NULL) OR parent_category_id = :parentCategoryId) AND name = :name AND category_type = :categoryType AND category_id != :excludedCategoryId)")
+    @Query("SELECT EXISTS(SELECT 1 FROM categories WHERE ((parent_category_id IS NULL AND :parentCategoryId IS NULL) OR parent_category_id = :parentCategoryId) AND LOWER(name) = LOWER(:name) AND category_type = :categoryType AND category_id != :excludedCategoryId)")
     suspend fun hasDuplicate(parentCategoryId: Long?, name: String, categoryType: String, excludedCategoryId: Long): Boolean
 
     @Transaction

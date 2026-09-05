@@ -18,6 +18,7 @@ import com.financialapp.domain.model.FundUnits
 import com.financialapp.domain.model.InvestmentTransactionType
 import com.financialapp.domain.model.Money
 import com.financialapp.domain.model.MutualFund
+import com.financialapp.domain.model.MutualFundNavPoint
 import com.financialapp.domain.model.MutualFundTransaction
 import com.financialapp.domain.model.Product
 import com.financialapp.domain.model.Quantity
@@ -48,7 +49,7 @@ data class WorkflowUiState(
     val transactions: List<FinancialTransaction> = emptyList(),
     val funds: List<MutualFund> = emptyList(),
     val investmentTransactions: List<MutualFundTransaction> = emptyList(),
-    val navHistory: List<com.financialapp.data.repository.FundNavEntry> = emptyList(),
+    val navHistory: List<MutualFundNavPoint> = emptyList(),
     val priceHistory: List<com.financialapp.domain.model.CommodityPricePoint> = emptyList(),
 )
 
@@ -73,14 +74,25 @@ class WorkflowsViewModel @Inject constructor(
         refreshJob = viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, message = successMessage, isError = false) }
             runCatching {
-                val accounts = accountRepository.observeAll().first()
+                val accounts = accountRepository.observeAll().first().map { entity ->
+                    Account(
+                        id = entity.accountId,
+                        name = entity.name,
+                        type = AccountType.valueOf(entity.accountType.name),
+                        openingBalance = Money(entity.openingBalanceMinor, entity.currencyCode),
+                        isActive = entity.isActive,
+                        isDeleted = entity.isDeleted,
+                        createdAt = Instant.ofEpochMilli(entity.createdAtEpochMs),
+                        updatedAt = Instant.ofEpochMilli(entity.updatedAtEpochMs),
+                    )
+                }
                 val categories = categoryRepository.getTree(includeInactive = true).flatMap { flatten(it) }
                 val products = productRepository.observeAll().first()
                 val transactions = financialRepository.getTransactions(LocalDate.MIN, LocalDate.MAX)
                 val purchases = products.flatMap { purchaseRepository.getPurchasesForProduct(it.id) }
-                val funds = mutualFundRepository.getFunds()
-                val investments = mutualFundRepository.getInvestmentTransactions()
-                val navs = mutualFundRepository.getNavHistory()
+                val funds = mutualFundRepository.getActiveFunds()
+                val investments = mutualFundRepository.getAllInvestmentTransactions()
+                val navs = mutualFundRepository.getAllNavHistory()
                 val prices = products.flatMap { priceRepository.getHistoryForProduct(it.id) }
                 WorkflowUiState(accounts = accounts, categories = categories, products = products, purchases = purchases, transactions = transactions, funds = funds, investmentTransactions = investments, navHistory = navs, priceHistory = prices)
             }.onSuccess { loaded -> _uiState.update { loaded.copy(message = successMessage ?: "Data loaded") } }
@@ -100,11 +112,21 @@ class WorkflowsViewModel @Inject constructor(
     }
 
     fun createAccount(name: String, type: String, opening: String) = submit {
-        accountRepository.create(Account(name = name, type = AccountType.valueOf(type.uppercase()), openingBalance = Money(opening.toMinorUnits(), "INR"), createdAt = Instant.now(), updatedAt = Instant.now()))
+        val now = Instant.now()
+        financialRepository.createAccount(Account(name = name, type = AccountType.valueOf(type.uppercase()), openingBalance = Money(opening.toMinorUnits(), "INR"), createdAt = now, updatedAt = now))
     }
 
-    fun setAccountActive(id: Long, active: Boolean) = submit { if (active) accountRepository.activate(id) else accountRepository.deactivate(id); id }
-    fun deleteAccount(id: Long) = submit { accountRepository.delete(id); id }
+    fun setAccountActive(id: Long, active: Boolean) = submit {
+        val entity = accountRepository.getById(id) ?: throw IllegalArgumentException("Account does not exist")
+        val now = System.currentTimeMillis()
+        accountRepository.upsert(entity.copy(isActive = active, updatedAtEpochMs = now))
+        id
+    }
+    fun deleteAccount(id: Long) = submit {
+        val now = System.currentTimeMillis()
+        accountRepository.softDelete(id, now, now)
+        id
+    }
     fun setCategoryActive(id: Long, active: Boolean) = submit { if (active) categoryRepository.activate(id) else categoryRepository.deactivate(id); id }
     fun deleteCategory(id: Long) = submit { categoryRepository.delete(id); id }
     fun setProductActive(id: Long, active: Boolean) = submit { productRepository.setActive(id, active); id }
