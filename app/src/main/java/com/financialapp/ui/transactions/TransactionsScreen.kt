@@ -2,10 +2,12 @@ package com.financialapp.ui.transactions
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,8 +20,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,12 +44,12 @@ import com.financialapp.domain.model.Category
 import com.financialapp.domain.model.CategoryType
 import com.financialapp.domain.model.FinancialTransaction
 import com.financialapp.domain.model.TransactionType
+import com.financialapp.ui.common.DatePickerField
+import com.financialapp.ui.common.DropdownMenuMaxHeight
 import com.financialapp.ui.common.formatMoney
 import com.financialapp.ui.common.formatRupeesFromMinorUnits
 import com.financialapp.ui.common.fieldErrorMessage
-import com.financialapp.ui.common.parseIsoDateOrNull
 import com.financialapp.ui.common.parseRupeesToMinorUnits
-import com.financialapp.ui.common.toIsoString
 import com.financialapp.ui.common.TypeaheadField
 import java.time.LocalDate
 
@@ -247,7 +247,7 @@ private fun AddTransactionDialog(
     var categoryText by remember { mutableStateOf(selectedCategory?.name.orEmpty()) }
     var showCreateCategory by remember { mutableStateOf(false) }
     var amount by remember { mutableStateOf(initial?.let { formatRupeesFromMinorUnits(it.amount.minorUnits) }.orEmpty()) }
-    var date by remember { mutableStateOf((initial?.transactionDate ?: LocalDate.now()).toIsoString()) }
+    var date by remember { mutableStateOf(initial?.transactionDate ?: LocalDate.now()) }
     var merchant by remember { mutableStateOf(initial?.merchantOrPayee.orEmpty()) }
     var notes by remember { mutableStateOf(initial?.notes.orEmpty()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -260,16 +260,19 @@ private fun AddTransactionDialog(
         title = { Text(title) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                ExposedDropdownMenuBox(expanded = typeExpanded, onExpandedChange = { typeExpanded = it }) {
+                Box {
                     OutlinedTextField(
                         value = selectedType.name,
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Type") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeExpanded) },
-                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                    DropdownMenu(expanded = typeExpanded, onDismissRequest = { typeExpanded = false }) {
+                    DropdownMenu(
+                        expanded = typeExpanded,
+                        onDismissRequest = { typeExpanded = false },
+                        modifier = Modifier.heightIn(max = DropdownMenuMaxHeight),
+                    ) {
                         listOf(TransactionType.EXPENSE, TransactionType.INCOME).forEach { type ->
                             DropdownMenuItem(
                                 text = { Text(type.name) },
@@ -278,18 +281,21 @@ private fun AddTransactionDialog(
                         }
                     }
                 }
-                ExposedDropdownMenuBox(expanded = accountExpanded, onExpandedChange = { accountExpanded = it }) {
+                Box {
                     OutlinedTextField(
                         value = selectedAccount?.name ?: "Select account",
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Account") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) },
                         isError = fieldErrorMessage(errorMessage, "account") != null,
                         supportingText = { fieldErrorMessage(errorMessage, "account")?.let { Text(it) } },
-                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                    DropdownMenu(expanded = accountExpanded, onDismissRequest = { accountExpanded = false }) {
+                    DropdownMenu(
+                        expanded = accountExpanded,
+                        onDismissRequest = { accountExpanded = false },
+                        modifier = Modifier.heightIn(max = DropdownMenuMaxHeight),
+                    ) {
                         accounts.forEach { account ->
                             DropdownMenuItem(
                                 text = { Text(account.name) },
@@ -315,14 +321,12 @@ private fun AddTransactionDialog(
                     supportingText = { fieldErrorMessage(errorMessage, "amount")?.let { Text(it) } },
                     modifier = Modifier.fillMaxWidth(),
                 )
-                OutlinedTextField(
+                DatePickerField(
                     value = date,
                     onValueChange = { date = it },
-                    label = { Text("Date (yyyy-MM-dd)") },
-                    singleLine = true,
+                    label = "Date",
                     isError = fieldErrorMessage(errorMessage, "date") != null,
                     supportingText = { fieldErrorMessage(errorMessage, "date")?.let { Text(it) } },
-                    modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(
                     value = merchant,
@@ -345,7 +349,6 @@ private fun AddTransactionDialog(
                 enabled = !isSaving,
                 onClick = {
                     val minorUnits = parseRupeesToMinorUnits(amount)
-                    val parsedDate = parseIsoDateOrNull(date)
                     val account = selectedAccount
                     val category = selectedCategory
                     when {
@@ -353,10 +356,9 @@ private fun AddTransactionDialog(
                         category == null && categoryText.isBlank() -> errorMessage = "Select a category"
                         category == null -> if (onCreateWithCategory != null) showCreateCategory = true else errorMessage = "Select a category"
                         minorUnits == null -> errorMessage = "Enter a valid positive amount"
-                        parsedDate == null -> errorMessage = "Enter a valid date (yyyy-MM-dd)"
                         else -> {
                             errorMessage = null
-                            onSave(account.id, selectedType, minorUnits, category!!.id, parsedDate, merchant, notes) { success, message ->
+                            onSave(account.id, selectedType, minorUnits, category!!.id, date, merchant, notes) { success, message ->
                                 if (!success) errorMessage = message
                             }
                         }
@@ -378,8 +380,7 @@ private fun AddTransactionDialog(
                 showCreateCategory = false
                 val account = selectedAccount!!
                 val minorUnits = parseRupeesToMinorUnits(amount)!!
-                val parsedDate = parseIsoDateOrNull(date)!!
-                onCreateWithCategory!!(account.id, selectedType, minorUnits, categoryText, parsedDate, merchant, notes) { success, message -> if (!success) errorMessage = message }
+                onCreateWithCategory!!(account.id, selectedType, minorUnits, categoryText, date, merchant, notes) { success, message -> if (!success) errorMessage = message }
             }) { Text("Create") } },
             dismissButton = { TextButton(onClick = { showCreateCategory = false }) { Text("Cancel") } },
         )
@@ -398,7 +399,7 @@ private fun AddTransferDialog(
     var destinationExpanded by remember { mutableStateOf(false) }
     var selectedDestination by remember { mutableStateOf<AccountOption?>(null) }
     var amount by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf(LocalDate.now().toIsoString()) }
+    var date by remember { mutableStateOf(LocalDate.now()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     AlertDialog(
@@ -406,16 +407,19 @@ private fun AddTransferDialog(
         title = { Text("New transfer") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                ExposedDropdownMenuBox(expanded = sourceExpanded, onExpandedChange = { sourceExpanded = it }) {
+                Box {
                     OutlinedTextField(
                         value = selectedSource?.name ?: "From account",
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("From") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = sourceExpanded) },
-                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                    DropdownMenu(expanded = sourceExpanded, onDismissRequest = { sourceExpanded = false }) {
+                    DropdownMenu(
+                        expanded = sourceExpanded,
+                        onDismissRequest = { sourceExpanded = false },
+                        modifier = Modifier.heightIn(max = DropdownMenuMaxHeight),
+                    ) {
                         accounts.forEach { account ->
                             DropdownMenuItem(
                                 text = { Text(account.name) },
@@ -424,16 +428,19 @@ private fun AddTransferDialog(
                         }
                     }
                 }
-                ExposedDropdownMenuBox(expanded = destinationExpanded, onExpandedChange = { destinationExpanded = it }) {
+                Box {
                     OutlinedTextField(
                         value = selectedDestination?.name ?: "To account",
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("To") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = destinationExpanded) },
-                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                    DropdownMenu(expanded = destinationExpanded, onDismissRequest = { destinationExpanded = false }) {
+                    DropdownMenu(
+                        expanded = destinationExpanded,
+                        onDismissRequest = { destinationExpanded = false },
+                        modifier = Modifier.heightIn(max = DropdownMenuMaxHeight),
+                    ) {
                         accounts.forEach { account ->
                             DropdownMenuItem(
                                 text = { Text(account.name) },
@@ -449,12 +456,10 @@ private fun AddTransferDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                OutlinedTextField(
+                DatePickerField(
                     value = date,
                     onValueChange = { date = it },
-                    label = { Text("Date (yyyy-MM-dd)") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+                    label = "Date",
                 )
                 errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }
@@ -464,17 +469,15 @@ private fun AddTransferDialog(
                 enabled = !isSaving,
                 onClick = {
                     val minorUnits = parseRupeesToMinorUnits(amount)
-                    val parsedDate = parseIsoDateOrNull(date)
                     val source = selectedSource
                     val destination = selectedDestination
                     when {
                         source == null || destination == null -> errorMessage = "Select both accounts"
                         source.id == destination.id -> errorMessage = "Source and destination must differ"
                         minorUnits == null -> errorMessage = "Enter a valid positive amount"
-                        parsedDate == null -> errorMessage = "Enter a valid date (yyyy-MM-dd)"
                         else -> {
                             errorMessage = null
-                            onSave(source.id, destination.id, minorUnits, parsedDate)
+                            onSave(source.id, destination.id, minorUnits, date)
                         }
                     }
                 },

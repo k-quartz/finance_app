@@ -1,7 +1,9 @@
 package com.financialapp.ui.categories
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,10 +17,8 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,6 +39,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.financialapp.domain.model.CategoryType
+import com.financialapp.ui.common.DropdownMenuMaxHeight
 import com.financialapp.ui.common.fieldErrorMessage
 import com.financialapp.ui.common.TypeaheadField
 
@@ -221,16 +222,19 @@ private fun CategoryFormDialog(
                     supportingText = { fieldErrorMessage(errorMessage, "name")?.let { Text(it) } },
                     modifier = Modifier.fillMaxWidth(),
                 )
-                ExposedDropdownMenuBox(expanded = typeExpanded, onExpandedChange = { typeExpanded = it }) {
+                Box {
                     OutlinedTextField(
                         value = selectedType.name,
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Category type") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeExpanded) },
-                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                    DropdownMenu(expanded = typeExpanded, onDismissRequest = { typeExpanded = false }) {
+                    DropdownMenu(
+                        expanded = typeExpanded,
+                        onDismissRequest = { typeExpanded = false },
+                        modifier = Modifier.heightIn(max = DropdownMenuMaxHeight),
+                    ) {
                         CategoryType.entries.forEach { type ->
                             DropdownMenuItem(
                                 text = { Text(type.name) },

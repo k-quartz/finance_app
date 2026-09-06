@@ -39,11 +39,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.financialapp.domain.model.DashboardPeriod
 import com.financialapp.domain.model.DashboardSummary
-import com.financialapp.domain.model.Money
-import java.math.BigDecimal
-import java.text.NumberFormat
-import java.util.Currency
-import java.util.Locale
+import com.financialapp.ui.common.formatMoney
 
 @Composable
 fun DashboardRoute(
@@ -296,10 +292,4 @@ private fun MetricLine(label: String, value: String) {
         Text(text = label, color = Color(0xFFB7C1D6), modifier = Modifier.weight(1f))
         Text(text = value, color = Color.White, textAlign = TextAlign.End)
     }
-}
-
-private fun formatMoney(amount: Money): String {
-    val formatter = NumberFormat.getCurrencyInstance(Locale("en", "IN"))
-    formatter.currency = Currency.getInstance(amount.currencyCode)
-    return formatter.format(BigDecimal.valueOf(amount.minorUnits, 2))
 }

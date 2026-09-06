@@ -2,10 +2,12 @@ package com.financialapp.ui.purchases
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,10 +18,8 @@ import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -43,12 +43,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.financialapp.domain.model.Product
 import com.financialapp.domain.model.CategoryType
 import com.financialapp.domain.model.Purchase
+import com.financialapp.ui.common.DatePickerField
+import com.financialapp.ui.common.DropdownMenuMaxHeight
 import com.financialapp.ui.common.formatMoney
 import com.financialapp.ui.common.formatRupeesFromMinorUnits
 import com.financialapp.ui.common.fieldErrorMessage
-import com.financialapp.ui.common.parseIsoDateOrNull
 import com.financialapp.ui.common.parseRupeesToMinorUnits
-import com.financialapp.ui.common.toIsoString
 import com.financialapp.ui.common.TypeaheadField
 import java.time.LocalDate
 
@@ -416,7 +416,7 @@ private fun PurchaseFormDialog(
     var categoryText by remember { mutableStateOf(selectedCategory?.name.orEmpty()) }
     var quantity by remember { mutableStateOf(initial?.quantity?.asDecimal()?.stripTrailingZeros()?.toPlainString().orEmpty()) }
     var unitPrice by remember { mutableStateOf(initial?.let { formatRupeesFromMinorUnits(it.unitPrice.minorUnits) }.orEmpty()) }
-    var date by remember { mutableStateOf((initial?.purchaseDate ?: LocalDate.now()).toIsoString()) }
+    var date by remember { mutableStateOf(initial?.purchaseDate ?: LocalDate.now()) }
     var merchant by remember { mutableStateOf(initial?.merchantName.orEmpty()) }
     var notes by remember { mutableStateOf(initial?.notes.orEmpty()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -453,18 +453,21 @@ private fun PurchaseFormDialog(
                     onCreate = onCreateProduct,
                     errorText = fieldErrorMessage(errorMessage, "product"),
                 )
-                ExposedDropdownMenuBox(expanded = accountExpanded, onExpandedChange = { accountExpanded = it }) {
+                Box {
                     OutlinedTextField(
                         value = selectedAccount?.name ?: "Select account",
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Paid from account") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) },
                         isError = fieldErrorMessage(errorMessage, "account") != null,
                         supportingText = { fieldErrorMessage(errorMessage, "account")?.let { Text(it) } },
-                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                    DropdownMenu(expanded = accountExpanded, onDismissRequest = { accountExpanded = false }) {
+                    DropdownMenu(
+                        expanded = accountExpanded,
+                        onDismissRequest = { accountExpanded = false },
+                        modifier = Modifier.heightIn(max = DropdownMenuMaxHeight),
+                    ) {
                         accounts.forEach { account ->
                             DropdownMenuItem(
                                 text = { Text(account.name) },
@@ -501,14 +504,12 @@ private fun PurchaseFormDialog(
                     supportingText = { fieldErrorMessage(errorMessage, "price")?.let { Text(it) } },
                     modifier = Modifier.fillMaxWidth(),
                 )
-                OutlinedTextField(
+                DatePickerField(
                     value = date,
                     onValueChange = { date = it },
-                    label = { Text("Date (yyyy-MM-dd)") },
-                    singleLine = true,
+                    label = "Date",
                     isError = fieldErrorMessage(errorMessage, "date") != null,
                     supportingText = { fieldErrorMessage(errorMessage, "date")?.let { Text(it) } },
-                    modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(
                     value = merchant,
@@ -534,7 +535,6 @@ private fun PurchaseFormDialog(
                     val account = selectedAccount
                     val category = selectedCategory
                     val unitPriceMinor = parseRupeesToMinorUnits(unitPrice)
-                    val parsedDate = parseIsoDateOrNull(date)
                     when {
                         !productResolved || product == null -> errorMessage = "Select a product from the list"
                         account == null -> errorMessage = "Select an account"
@@ -542,7 +542,6 @@ private fun PurchaseFormDialog(
                         quantity.toBigDecimalOrNull() == null || quantity.toBigDecimalOrNull()!! <= java.math.BigDecimal.ZERO ->
                             errorMessage = "Enter a valid positive quantity"
                         unitPriceMinor == null -> errorMessage = "Enter a valid positive unit price"
-                        parsedDate == null -> errorMessage = "Enter a valid date (yyyy-MM-dd)"
                         else -> {
                             onSave(
                                 account.id,
@@ -551,7 +550,7 @@ private fun PurchaseFormDialog(
                                 quantity,
                                 product.defaultUnit,
                                 unitPriceMinor,
-                                parsedDate,
+                                date,
                                 merchant,
                                 notes,
                             ) { success, message -> if (!success) errorMessage = message }

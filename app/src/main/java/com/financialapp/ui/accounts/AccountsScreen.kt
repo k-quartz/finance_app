@@ -1,7 +1,9 @@
 package com.financialapp.ui.accounts
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,10 +17,8 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,6 +44,7 @@ import com.financialapp.ui.common.formatMoney
 import com.financialapp.ui.common.formatRupeesFromMinorUnits
 import com.financialapp.ui.common.fieldErrorMessage
 import com.financialapp.ui.common.parseRupeesToMinorUnits
+import com.financialapp.ui.common.DropdownMenuMaxHeight
 
 @Composable
 fun AccountsRoute(
@@ -211,16 +212,19 @@ private fun AccountFormDialog(
                     supportingText = { fieldErrorMessage(errorMessage, "name")?.let { Text(it) } },
                     modifier = Modifier.fillMaxWidth(),
                 )
-                ExposedDropdownMenuBox(expanded = typeExpanded, onExpandedChange = { typeExpanded = it }) {
+                Box {
                     OutlinedTextField(
                         value = selectedType.name,
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Account type") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeExpanded) },
-                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                    DropdownMenu(expanded = typeExpanded, onDismissRequest = { typeExpanded = false }) {
+                    DropdownMenu(
+                        expanded = typeExpanded,
+                        onDismissRequest = { typeExpanded = false },
+                        modifier = Modifier.heightIn(max = DropdownMenuMaxHeight),
+                    ) {
                         AccountType.entries.forEach { type ->
                             DropdownMenuItem(
                                 text = { Text(type.name) },

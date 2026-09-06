@@ -2,7 +2,9 @@ package com.financialapp.ui.mutualfunds
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,8 +20,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -43,11 +43,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.financialapp.domain.model.InvestmentTransactionType
 import com.financialapp.domain.model.MutualFund
 import com.financialapp.domain.model.MutualFundHoldingValue
+import com.financialapp.ui.common.DatePickerField
+import com.financialapp.ui.common.DropdownMenuMaxHeight
 import com.financialapp.ui.common.formatMoney
 import com.financialapp.ui.common.fieldErrorMessage
-import com.financialapp.ui.common.parseIsoDateOrNull
 import com.financialapp.ui.common.parseRupeesToMinorUnits
-import com.financialapp.ui.common.toIsoString
 import com.financialapp.ui.common.TypeaheadField
 import java.time.LocalDate
 
@@ -312,7 +312,7 @@ private fun RecordInvestmentDialog(
     }
     var fundText by remember { mutableStateOf(selectedFund?.name.orEmpty()) }
     var navAmount by remember { mutableStateOf("") }
-    var navDate by remember { mutableStateOf(LocalDate.now().toIsoString()) }
+    var navDate by remember { mutableStateOf(LocalDate.now()) }
     var typeExpanded by remember { mutableStateOf(false) }
     var selectedType by remember { mutableStateOf(InvestmentTransactionType.PURCHASE) }
     var accountExpanded by remember { mutableStateOf(false) }
@@ -353,41 +353,41 @@ private fun RecordInvestmentDialog(
                         singleLine = true,
                         modifier = Modifier.weight(1f),
                     )
-                    OutlinedTextField(
+                    DatePickerField(
                         value = navDate,
                         onValueChange = { navDate = it },
-                        label = { Text("NAV date") },
-                        singleLine = true,
+                        label = "NAV date",
                         modifier = Modifier.weight(1f),
                     )
                 }
                 TextButton(onClick = {
                     val fund = selectedFund
                     val nav = parseRupeesToMinorUnits(navAmount)
-                    val date = parseIsoDateOrNull(navDate)
                     when {
                         !fundResolved || fund == null -> errorMessage = "Select a fund from the list"
                         nav == null -> errorMessage = "Enter a valid positive NAV"
-                        date == null -> errorMessage = "Enter a valid NAV date"
                         else -> {
                             errorMessage = null
-                            onRecordNav(fund.id, nav, date) { success, message ->
+                            onRecordNav(fund.id, nav, navDate) { success, message ->
                                 infoMessage = if (success) "NAV recorded" else message
                             }
                         }
                     }
                 }) { Text("Record NAV only") }
 
-                ExposedDropdownMenuBox(expanded = typeExpanded, onExpandedChange = { typeExpanded = it }) {
+                Box {
                     OutlinedTextField(
                         value = selectedType.name,
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Transaction type") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = typeExpanded) },
-                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                    DropdownMenu(expanded = typeExpanded, onDismissRequest = { typeExpanded = false }) {
+                    DropdownMenu(
+                        expanded = typeExpanded,
+                        onDismissRequest = { typeExpanded = false },
+                        modifier = Modifier.heightIn(max = DropdownMenuMaxHeight),
+                    ) {
                         InvestmentTransactionType.entries.forEach { type ->
                             DropdownMenuItem(
                                 text = { Text(type.name) },
@@ -396,16 +396,19 @@ private fun RecordInvestmentDialog(
                         }
                     }
                 }
-                ExposedDropdownMenuBox(expanded = accountExpanded, onExpandedChange = { accountExpanded = it }) {
+                Box {
                     OutlinedTextField(
                         value = selectedAccount?.name ?: "Select investment account",
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Investment account") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = accountExpanded) },
-                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                    DropdownMenu(expanded = accountExpanded, onDismissRequest = { accountExpanded = false }) {
+                    DropdownMenu(
+                        expanded = accountExpanded,
+                        onDismissRequest = { accountExpanded = false },
+                        modifier = Modifier.heightIn(max = DropdownMenuMaxHeight),
+                    ) {
                         state.investmentAccounts.forEach { account ->
                             DropdownMenuItem(
                                 text = { Text(account.name) },
@@ -414,16 +417,19 @@ private fun RecordInvestmentDialog(
                         }
                     }
                 }
-                ExposedDropdownMenuBox(expanded = cashAccountExpanded, onExpandedChange = { cashAccountExpanded = it }) {
+                Box {
                     OutlinedTextField(
                         value = selectedCashAccount?.name ?: "No linked cash account",
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Linked cash account (optional)") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = cashAccountExpanded) },
-                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                    DropdownMenu(expanded = cashAccountExpanded, onDismissRequest = { cashAccountExpanded = false }) {
+                    DropdownMenu(
+                        expanded = cashAccountExpanded,
+                        onDismissRequest = { cashAccountExpanded = false },
+                        modifier = Modifier.heightIn(max = DropdownMenuMaxHeight),
+                    ) {
                         DropdownMenuItem(
                             text = { Text("No linked cash account") },
                             onClick = { selectedCashAccount = null; cashAccountExpanded = false },
@@ -454,16 +460,14 @@ private fun RecordInvestmentDialog(
                     val fund = selectedFund
                     val account = selectedAccount
                     val nav = parseRupeesToMinorUnits(navAmount)
-                    val date = parseIsoDateOrNull(navDate)
                     when {
                         !fundResolved || fund == null -> errorMessage = "Select a fund from the list"
                         account == null -> errorMessage = "Select an investment account"
                         nav == null -> errorMessage = "Enter a valid positive NAV"
-                        date == null -> errorMessage = "Enter a valid date"
                         units.isBlank() -> errorMessage = "Enter units"
                         else -> {
                             errorMessage = null
-                            onRecordInvestment(fund.id, account.id, selectedCashAccount?.id, selectedType, units, nav, date)
+                            onRecordInvestment(fund.id, account.id, selectedCashAccount?.id, selectedType, units, nav, navDate)
                         }
                     }
                 },

@@ -14,6 +14,8 @@ import java.util.Locale
 fun formatMoney(amount: Money): String {
     val formatter = NumberFormat.getCurrencyInstance(Locale("en", "IN"))
     formatter.currency = Currency.getInstance(amount.currencyCode)
+    formatter.minimumFractionDigits = 2
+    formatter.maximumFractionDigits = 2
     return formatter.format(BigDecimal.valueOf(amount.minorUnits, 2))
 }
 
@@ -34,7 +36,7 @@ fun parseRupeesToMinorUnits(text: String, allowZero: Boolean = false): Long? {
 
 /** Formats exact INR minor units as a rupee decimal string for edit fields. */
 fun formatRupeesFromMinorUnits(minorUnits: Long): String =
-    BigDecimal.valueOf(minorUnits, 2).stripTrailingZeros().toPlainString()
+    BigDecimal.valueOf(minorUnits, 2).setScale(2, RoundingMode.UNNECESSARY).toPlainString()
 
 private fun String.toBigDecimalOrNull(): BigDecimal? = try {
     BigDecimal(this)
