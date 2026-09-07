@@ -4,7 +4,6 @@
 **/build/
 local.properties
 .idea/
-.vscode/
 .DS_Store
 
 # Gradle
@@ -22,3 +21,5 @@ Thumbs.db
 # Logs
 *.log
 .md
+config.bat
+node_modules

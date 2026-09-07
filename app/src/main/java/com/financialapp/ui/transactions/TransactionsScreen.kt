@@ -2,12 +2,10 @@ package com.financialapp.ui.transactions
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,8 +16,6 @@ import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,7 +41,7 @@ import com.financialapp.domain.model.CategoryType
 import com.financialapp.domain.model.FinancialTransaction
 import com.financialapp.domain.model.TransactionType
 import com.financialapp.ui.common.DatePickerField
-import com.financialapp.ui.common.DropdownMenuMaxHeight
+import com.financialapp.ui.common.SelectionDropdownField
 import com.financialapp.ui.common.formatMoney
 import com.financialapp.ui.common.formatRupeesFromMinorUnits
 import com.financialapp.ui.common.fieldErrorMessage
@@ -238,11 +234,8 @@ private fun AddTransactionDialog(
     onSave: (Long, TransactionType, Long, Long, LocalDate, String?, String?, (Boolean, String?) -> Unit) -> Unit,
     onCreateWithCategory: ((Long, TransactionType, Long, String, LocalDate, String?, String?, (Boolean, String?) -> Unit) -> Unit)? = null,
 ) {
-    var typeExpanded by remember { mutableStateOf(false) }
     var selectedType by remember { mutableStateOf(initial?.type ?: TransactionType.EXPENSE) }
-    var accountExpanded by remember { mutableStateOf(false) }
     var selectedAccount by remember { mutableStateOf(accounts.firstOrNull { it.id == initial?.accountId }) }
-    var categoryExpanded by remember { mutableStateOf(false) }
     var selectedCategory by remember { mutableStateOf(categories.firstOrNull { it.id == initial?.categoryId }) }
     var categoryText by remember { mutableStateOf(selectedCategory?.name.orEmpty()) }
     var showCreateCategory by remember { mutableStateOf(false) }
@@ -260,55 +253,34 @@ private fun AddTransactionDialog(
         title = { Text(title) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Box {
-                    OutlinedTextField(
-                        value = selectedType.name,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Type") },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    DropdownMenu(
-                        expanded = typeExpanded,
-                        onDismissRequest = { typeExpanded = false },
-                        modifier = Modifier.heightIn(max = DropdownMenuMaxHeight),
-                    ) {
-                        listOf(TransactionType.EXPENSE, TransactionType.INCOME).forEach { type ->
-                            DropdownMenuItem(
-                                text = { Text(type.name) },
-                                onClick = { selectedType = type; selectedCategory = null; typeExpanded = false },
-                            )
-                        }
-                    }
-                }
-                Box {
-                    OutlinedTextField(
-                        value = selectedAccount?.name ?: "Select account",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Account") },
-                        isError = fieldErrorMessage(errorMessage, "account") != null,
-                        supportingText = { fieldErrorMessage(errorMessage, "account")?.let { Text(it) } },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    DropdownMenu(
-                        expanded = accountExpanded,
-                        onDismissRequest = { accountExpanded = false },
-                        modifier = Modifier.heightIn(max = DropdownMenuMaxHeight),
-                    ) {
-                        accounts.forEach { account ->
-                            DropdownMenuItem(
-                                text = { Text(account.name) },
-                                onClick = { selectedAccount = account; accountExpanded = false },
-                            )
-                        }
-                    }
-                }
+                SelectionDropdownField(
+                    label = "Type",
+                    selectedText = selectedType.name,
+                    options = listOf(TransactionType.EXPENSE, TransactionType.INCOME),
+                    optionLabel = { it.name },
+                    onOptionSelected = {
+                        selectedType = it
+                        selectedCategory = null
+                    },
+                    forceStandardDropdown = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                SelectionDropdownField(
+                    label = "Account",
+                    selectedText = selectedAccount?.name.orEmpty(),
+                    placeholder = "Select account",
+                    options = accounts,
+                    optionLabel = { it.name },
+                    isError = fieldErrorMessage(errorMessage, "account") != null,
+                    supportingText = fieldErrorMessage(errorMessage, "account"),
+                    onOptionSelected = { selectedAccount = it },
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 TypeaheadField(
                     value = categoryText,
                     onValueChange = { categoryText = it; selectedCategory = null },
                     label = "Category",
-                    suggestions = eligibleCategories.filter { it.name.contains(categoryText, true) }.map { it.name },
+                    suggestions = eligibleCategories.map { it.name },
                     onSuggestionSelected = { name -> selectedCategory = eligibleCategories.first { it.name == name }; categoryText = name },
                     errorText = fieldErrorMessage(errorMessage, "category"),
                 )
@@ -394,9 +366,7 @@ private fun AddTransferDialog(
     onDismiss: () -> Unit,
     onSave: (Long, Long, Long, LocalDate) -> Unit,
 ) {
-    var sourceExpanded by remember { mutableStateOf(false) }
     var selectedSource by remember { mutableStateOf<AccountOption?>(null) }
-    var destinationExpanded by remember { mutableStateOf(false) }
     var selectedDestination by remember { mutableStateOf<AccountOption?>(null) }
     var amount by remember { mutableStateOf("") }
     var date by remember { mutableStateOf(LocalDate.now()) }
@@ -407,48 +377,24 @@ private fun AddTransferDialog(
         title = { Text("New transfer") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Box {
-                    OutlinedTextField(
-                        value = selectedSource?.name ?: "From account",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("From") },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    DropdownMenu(
-                        expanded = sourceExpanded,
-                        onDismissRequest = { sourceExpanded = false },
-                        modifier = Modifier.heightIn(max = DropdownMenuMaxHeight),
-                    ) {
-                        accounts.forEach { account ->
-                            DropdownMenuItem(
-                                text = { Text(account.name) },
-                                onClick = { selectedSource = account; sourceExpanded = false },
-                            )
-                        }
-                    }
-                }
-                Box {
-                    OutlinedTextField(
-                        value = selectedDestination?.name ?: "To account",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("To") },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    DropdownMenu(
-                        expanded = destinationExpanded,
-                        onDismissRequest = { destinationExpanded = false },
-                        modifier = Modifier.heightIn(max = DropdownMenuMaxHeight),
-                    ) {
-                        accounts.forEach { account ->
-                            DropdownMenuItem(
-                                text = { Text(account.name) },
-                                onClick = { selectedDestination = account; destinationExpanded = false },
-                            )
-                        }
-                    }
-                }
+                SelectionDropdownField(
+                    label = "From",
+                    selectedText = selectedSource?.name.orEmpty(),
+                    placeholder = "From account",
+                    options = accounts,
+                    optionLabel = { it.name },
+                    onOptionSelected = { selectedSource = it },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                SelectionDropdownField(
+                    label = "To",
+                    selectedText = selectedDestination?.name.orEmpty(),
+                    placeholder = "To account",
+                    options = accounts,
+                    optionLabel = { it.name },
+                    onOptionSelected = { selectedDestination = it },
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { amount = it },

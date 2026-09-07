@@ -1,9 +1,7 @@
 package com.financialapp.ui.accounts
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,8 +15,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,7 +40,7 @@ import com.financialapp.ui.common.formatMoney
 import com.financialapp.ui.common.formatRupeesFromMinorUnits
 import com.financialapp.ui.common.fieldErrorMessage
 import com.financialapp.ui.common.parseRupeesToMinorUnits
-import com.financialapp.ui.common.DropdownMenuMaxHeight
+import com.financialapp.ui.common.SelectionDropdownField
 
 @Composable
 fun AccountsRoute(
@@ -194,7 +190,6 @@ private fun AccountFormDialog(
 ) {
     var name by remember { mutableStateOf(initial?.name.orEmpty()) }
     var openingBalance by remember { mutableStateOf(initial?.let { formatRupeesFromMinorUnits(it.openingBalance.minorUnits) } ?: "0") }
-    var typeExpanded by remember { mutableStateOf(false) }
     var selectedType by remember { mutableStateOf(initial?.type ?: AccountType.BANK) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -212,30 +207,15 @@ private fun AccountFormDialog(
                     supportingText = { fieldErrorMessage(errorMessage, "name")?.let { Text(it) } },
                     modifier = Modifier.fillMaxWidth(),
                 )
-                Box {
-                    OutlinedTextField(
-                        value = selectedType.name,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Account type") },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    DropdownMenu(
-                        expanded = typeExpanded,
-                        onDismissRequest = { typeExpanded = false },
-                        modifier = Modifier.heightIn(max = DropdownMenuMaxHeight),
-                    ) {
-                        AccountType.entries.forEach { type ->
-                            DropdownMenuItem(
-                                text = { Text(type.name) },
-                                onClick = {
-                                    selectedType = type
-                                    typeExpanded = false
-                                },
-                            )
-                        }
-                    }
-                }
+                SelectionDropdownField(
+                    label = "Account type",
+                    selectedText = selectedType.name,
+                    options = AccountType.entries.toList(),
+                    optionLabel = { it.name },
+                    onOptionSelected = { selectedType = it },
+                    forceStandardDropdown = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 OutlinedTextField(
                     value = openingBalance,
                     onValueChange = { openingBalance = it },

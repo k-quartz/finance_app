@@ -2,12 +2,10 @@ package com.financialapp.ui.purchases
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,8 +16,6 @@ import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,7 +40,7 @@ import com.financialapp.domain.model.Product
 import com.financialapp.domain.model.CategoryType
 import com.financialapp.domain.model.Purchase
 import com.financialapp.ui.common.DatePickerField
-import com.financialapp.ui.common.DropdownMenuMaxHeight
+import com.financialapp.ui.common.SelectionDropdownField
 import com.financialapp.ui.common.formatMoney
 import com.financialapp.ui.common.formatRupeesFromMinorUnits
 import com.financialapp.ui.common.fieldErrorMessage
@@ -354,7 +350,7 @@ private fun ProductFormDialog(
                     value = categoryText,
                     onValueChange = { categoryText = it; category = null },
                     label = "Category (optional)",
-                    suggestions = categories.filter { it.name.contains(categoryText, true) }.map { it.name },
+                    suggestions = categories.map { it.name },
                     onSuggestionSelected = { name -> category = categories.first { it.name == name }; categoryText = name },
                 )
                 OutlinedTextField(
@@ -404,12 +400,9 @@ private fun PurchaseFormDialog(
     val products = state.products
     val accounts = state.accounts
     val categories = state.expenseCategories
-    var productExpanded by remember { mutableStateOf(false) }
     var selectedProduct by remember { mutableStateOf(products.firstOrNull { it.id == initial?.productId }) }
     var productText by remember { mutableStateOf(selectedProduct?.name.orEmpty()) }
-    var accountExpanded by remember { mutableStateOf(false) }
     var selectedAccount by remember { mutableStateOf(accounts.firstOrNull()) }
-    var categoryExpanded by remember { mutableStateOf(false) }
     var selectedCategory by remember {
         mutableStateOf(categories.firstOrNull { it.id == (initial?.categoryId ?: selectedProduct?.categoryId) })
     }
@@ -447,40 +440,28 @@ private fun PurchaseFormDialog(
                     value = productText,
                     onValueChange = { productText = it; selectedProduct = null },
                     label = "Product",
-                    suggestions = products.filter { it.name.contains(productText, true) }.map { it.name },
+                    suggestions = products.map { it.name },
                     onSuggestionSelected = { name -> selectedProduct = products.first { it.name == name }; productText = name },
                     createLabel = "Create product \"$productText\"",
                     onCreate = onCreateProduct,
                     errorText = fieldErrorMessage(errorMessage, "product"),
                 )
-                Box {
-                    OutlinedTextField(
-                        value = selectedAccount?.name ?: "Select account",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Paid from account") },
-                        isError = fieldErrorMessage(errorMessage, "account") != null,
-                        supportingText = { fieldErrorMessage(errorMessage, "account")?.let { Text(it) } },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    DropdownMenu(
-                        expanded = accountExpanded,
-                        onDismissRequest = { accountExpanded = false },
-                        modifier = Modifier.heightIn(max = DropdownMenuMaxHeight),
-                    ) {
-                        accounts.forEach { account ->
-                            DropdownMenuItem(
-                                text = { Text(account.name) },
-                                onClick = { selectedAccount = account; accountExpanded = false },
-                            )
-                        }
-                    }
-                }
+                SelectionDropdownField(
+                    label = "Paid from account",
+                    selectedText = selectedAccount?.name.orEmpty(),
+                    placeholder = "Select account",
+                    options = accounts,
+                    optionLabel = { it.name },
+                    isError = fieldErrorMessage(errorMessage, "account") != null,
+                    supportingText = fieldErrorMessage(errorMessage, "account"),
+                    onOptionSelected = { selectedAccount = it },
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 TypeaheadField(
                     value = categoryText,
                     onValueChange = { categoryText = it; selectedCategory = null },
                     label = "Expense category",
-                    suggestions = categories.filter { it.name.contains(categoryText, true) }.map { it.name },
+                    suggestions = categories.map { it.name },
                     onSuggestionSelected = { name -> selectedCategory = categories.first { it.name == name }; categoryText = name },
                     createLabel = "Create category \"$categoryText\"",
                     onCreate = onCreateCategory,

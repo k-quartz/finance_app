@@ -1,9 +1,7 @@
 package com.financialapp.ui.categories
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,8 +15,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,7 +35,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.financialapp.domain.model.CategoryType
-import com.financialapp.ui.common.DropdownMenuMaxHeight
+import com.financialapp.ui.common.SelectionDropdownField
 import com.financialapp.ui.common.fieldErrorMessage
 import com.financialapp.ui.common.TypeaheadField
 
@@ -194,7 +190,6 @@ private fun CategoryFormDialog(
     onSave: (String, CategoryType, Long?, (Boolean, String?) -> Unit) -> Unit,
 ) {
     var name by remember { mutableStateOf(initial?.category?.name.orEmpty()) }
-    var typeExpanded by remember { mutableStateOf(false) }
     var selectedType by remember { mutableStateOf(initial?.category?.type ?: CategoryType.EXPENSE) }
     var selectedParent by remember {
         mutableStateOf(candidateParents.firstOrNull { it.category.id == initial?.category?.parentId })
@@ -222,36 +217,22 @@ private fun CategoryFormDialog(
                     supportingText = { fieldErrorMessage(errorMessage, "name")?.let { Text(it) } },
                     modifier = Modifier.fillMaxWidth(),
                 )
-                Box {
-                    OutlinedTextField(
-                        value = selectedType.name,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Category type") },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    DropdownMenu(
-                        expanded = typeExpanded,
-                        onDismissRequest = { typeExpanded = false },
-                        modifier = Modifier.heightIn(max = DropdownMenuMaxHeight),
-                    ) {
-                        CategoryType.entries.forEach { type ->
-                            DropdownMenuItem(
-                                text = { Text(type.name) },
-                                onClick = {
-                                    selectedType = type
-                                    selectedParent = null
-                                    typeExpanded = false
-                                },
-                            )
-                        }
-                    }
-                }
+                SelectionDropdownField(
+                    label = "Category type",
+                    selectedText = selectedType.name,
+                    options = CategoryType.entries.toList(),
+                    optionLabel = { it.name },
+                    onOptionSelected = {
+                        selectedType = it
+                        selectedParent = null
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 TypeaheadField(
                     value = parentText,
                     onValueChange = { parentText = it; selectedParent = null },
                     label = "Parent category (optional)",
-                    suggestions = eligibleParents.filter { it.category.name.contains(parentText, true) }.map { it.category.name },
+                    suggestions = eligibleParents.map { it.category.name },
                     onSuggestionSelected = { name -> selectedParent = eligibleParents.first { it.category.name == name }; parentText = name },
                     createLabel = "Create parent category \"$parentText\"",
                     onCreate = onCreateParent,

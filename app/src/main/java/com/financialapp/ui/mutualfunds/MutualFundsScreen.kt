@@ -2,9 +2,7 @@ package com.financialapp.ui.mutualfunds
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,8 +16,6 @@ import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,7 +40,7 @@ import com.financialapp.domain.model.InvestmentTransactionType
 import com.financialapp.domain.model.MutualFund
 import com.financialapp.domain.model.MutualFundHoldingValue
 import com.financialapp.ui.common.DatePickerField
-import com.financialapp.ui.common.DropdownMenuMaxHeight
+import com.financialapp.ui.common.SelectionDropdownField
 import com.financialapp.ui.common.formatMoney
 import com.financialapp.ui.common.fieldErrorMessage
 import com.financialapp.ui.common.parseRupeesToMinorUnits
@@ -313,11 +309,8 @@ private fun RecordInvestmentDialog(
     var fundText by remember { mutableStateOf(selectedFund?.name.orEmpty()) }
     var navAmount by remember { mutableStateOf("") }
     var navDate by remember { mutableStateOf(LocalDate.now()) }
-    var typeExpanded by remember { mutableStateOf(false) }
     var selectedType by remember { mutableStateOf(InvestmentTransactionType.PURCHASE) }
-    var accountExpanded by remember { mutableStateOf(false) }
     var selectedAccount by remember { mutableStateOf(state.investmentAccounts.firstOrNull()) }
-    var cashAccountExpanded by remember { mutableStateOf(false) }
     var selectedCashAccount by remember { mutableStateOf<InvestmentAccountOption?>(null) }
     var units by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -339,7 +332,7 @@ private fun RecordInvestmentDialog(
                     value = fundText,
                     onValueChange = { fundText = it; selectedFund = null },
                     label = "Fund",
-                    suggestions = state.funds.filter { it.name.contains(fundText, true) }.map { it.name },
+                    suggestions = state.funds.map { it.name },
                     onSuggestionSelected = { name -> selectedFund = state.funds.first { it.name == name }; fundText = name },
                     createLabel = "Create fund \"$fundText\"",
                     onCreate = onCreateFund,
@@ -375,73 +368,33 @@ private fun RecordInvestmentDialog(
                     }
                 }) { Text("Record NAV only") }
 
-                Box {
-                    OutlinedTextField(
-                        value = selectedType.name,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Transaction type") },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    DropdownMenu(
-                        expanded = typeExpanded,
-                        onDismissRequest = { typeExpanded = false },
-                        modifier = Modifier.heightIn(max = DropdownMenuMaxHeight),
-                    ) {
-                        InvestmentTransactionType.entries.forEach { type ->
-                            DropdownMenuItem(
-                                text = { Text(type.name) },
-                                onClick = { selectedType = type; typeExpanded = false },
-                            )
-                        }
-                    }
-                }
-                Box {
-                    OutlinedTextField(
-                        value = selectedAccount?.name ?: "Select investment account",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Investment account") },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    DropdownMenu(
-                        expanded = accountExpanded,
-                        onDismissRequest = { accountExpanded = false },
-                        modifier = Modifier.heightIn(max = DropdownMenuMaxHeight),
-                    ) {
-                        state.investmentAccounts.forEach { account ->
-                            DropdownMenuItem(
-                                text = { Text(account.name) },
-                                onClick = { selectedAccount = account; accountExpanded = false },
-                            )
-                        }
-                    }
-                }
-                Box {
-                    OutlinedTextField(
-                        value = selectedCashAccount?.name ?: "No linked cash account",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Linked cash account (optional)") },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    DropdownMenu(
-                        expanded = cashAccountExpanded,
-                        onDismissRequest = { cashAccountExpanded = false },
-                        modifier = Modifier.heightIn(max = DropdownMenuMaxHeight),
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("No linked cash account") },
-                            onClick = { selectedCashAccount = null; cashAccountExpanded = false },
-                        )
-                        state.cashAccounts.forEach { account ->
-                            DropdownMenuItem(
-                                text = { Text(account.name) },
-                                onClick = { selectedCashAccount = account; cashAccountExpanded = false },
-                            )
-                        }
-                    }
-                }
+                SelectionDropdownField(
+                    label = "Transaction type",
+                    selectedText = selectedType.name,
+                    options = InvestmentTransactionType.entries.toList(),
+                    optionLabel = { it.name },
+                    onOptionSelected = { selectedType = it },
+                    forceStandardDropdown = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                SelectionDropdownField(
+                    label = "Investment account",
+                    selectedText = selectedAccount?.name.orEmpty(),
+                    placeholder = "Select investment account",
+                    options = state.investmentAccounts,
+                    optionLabel = { it.name },
+                    onOptionSelected = { selectedAccount = it },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                SelectionDropdownField(
+                    label = "Linked cash account (optional)",
+                    selectedText = selectedCashAccount?.name.orEmpty(),
+                    placeholder = "No linked cash account",
+                    options = listOf<InvestmentAccountOption?>(null) + state.cashAccounts,
+                    optionLabel = { it?.name ?: "No linked cash account" },
+                    onOptionSelected = { selectedCashAccount = it },
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 OutlinedTextField(
                     value = units,
                     onValueChange = { units = it },
